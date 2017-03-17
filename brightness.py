@@ -248,7 +248,7 @@ class Brightness():
     def saveWeight(self,norm=False,filename=None,path='.'):
         if filename == None:
             filename = 'wgt.out'
-        os.path.join(path,filename)
+        #os.path.join(path,filename)
         fp = open(filename,'w')
         s = '#P  \tz  \t'
         for f in self.freqs:
