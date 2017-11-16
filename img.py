@@ -11,8 +11,9 @@ import shape
 import raypath
 import TBfile
 
+
 class Img:
-    def __init__(self,i='?',readAndPlot=True):
+    def __init__(self, i='?', readAndPlot=True):
         self.TB = TBfile.TBfile('Output')
         self.kerneled = False
         self.kernel = None
@@ -20,12 +21,11 @@ class Img:
         self.reducedImagesMade = False
         if readAndPlot:
             self.getImage(i)
-        
-    def getImage(self,ifilename=None,usedir='Output'):
+
+    def getImage(self, ifilename=None, usedir='Output'):
         """Reads in image files from pyPlanet"""
 
-        self.TB.read(ifilename)  #what to do about usedir?
-
+        self.TB.read(ifilename)  # what to do about usedir?
         print 'For now copy data over to local self...'
         self.data = self.TB.data
         self.header = self.TB.header
@@ -75,7 +75,7 @@ class Img:
             fixVal = np.where(self.data > fixThreshhold)
         else:
             fixVal = np.where(self.data > fixThreshhold)
-            
+
         if padValue == 'auto':
             offset = [[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1]]
             padValue = []
@@ -113,7 +113,7 @@ class Img:
                     inDisc = False
                 if not inDisc:
                     continue
-                
+
                 derivForward = self.data[i,j+1] - self.data[i,j]
                 derivReverse = self.data[i,j] - self.data[i,j-1]
                 if abs(derivForward) > threshhold:
@@ -135,7 +135,7 @@ class Img:
         return fixLoc
 
     def outline(self,tip='auto',reference='ref'):
-        """Finds approximate elliptical outline.  
+        """Finds approximate elliptical outline.
               - tip:  angle in the plane of the sky, 'auto' to match observation, 0 for aligned vertical
               - reference:  ['edge' or 'ref' or number_km]"""
         outline = [[],[]]
@@ -153,9 +153,9 @@ class Img:
         except KeyError:
             print 'Not enough header information'
             return None
-        
+
         print 'Reference disc is %.1f x %.1f km at %.1f km distance' % (Req,Rpol,dist)
-        print 'Image resolution is %f arcsec' % (self.resolution)   
+        print 'Image resolution is %f arcsec' % (self.resolution)
         if type(reference)==float or type(reference)==int:
             a = float(reference)
         elif reference=='edge':
@@ -166,7 +166,7 @@ class Img:
         f = (Req-Rpol)/Req
         lat_pc = math.atan(math.tan(lat_pg)*(1.0-f)**2)
         b = a*(1.0 - f*math.cos( lat_pc )**2)
- 
+
         ### Convert to arcsec
         a = (180.0/math.pi)*3600.0*math.atan(a/dist)
         b = (180.0/math.pi)*3600.0*math.atan(b/dist)
@@ -237,7 +237,7 @@ class Img:
         for th in np.arange(-lngs/2.0,lngs/2.0,lngs/200.0):
             angle = th*np.pi/180.0
             r = np.array([alat*math.sin(angle), ylat, alat*math.cos(angle)])
-            r = raypath.__rotate2obs__(rotate,tip,r) 
+            r = raypath.__rotate2obs__(rotate,tip,r)
             lat[0].append(r[0])
             lat[1].append(r[1])
         return lat
@@ -256,7 +256,7 @@ class Img:
         plt.plot(lat[0],lat[1],'k')
         lat = self.lat(30.0,lngs=160.0,rotate='auto',tip=tip,reference=reference)
         plt.plot(lat[0],lat[1],'k--')
-            
+
     def saveImage(self,header=None,image=None,filename=None):
         """Saves header/image to file"""
         if image == None:
@@ -414,7 +414,7 @@ class Img:
         self.header['kernel'] = [fwhm,'arcsec',ktype]
         print 'kernel at self.kernel and self.kernelHeader'
         self.kerneled = True
-        
+
         return alpha
 
     def discAverage(self,threshhold=1.0):
@@ -590,7 +590,7 @@ class Img:
         else:
             row_best = 0
             col_best = 0
-            
+
         # difference images
         self.diffImage = np.zeros(np.shape(self.image1reduced))
         for i in range( len(self.image1reduced) ):
@@ -607,7 +607,7 @@ class Img:
             bm[0].append(self.fwhm*math.cos(th)/2.0 + pos[0])
             bm[1].append(self.fwhm*math.sin(th)/2.0 + pos[1])
         plt.plot(bm[0],bm[1],'k')
-        
+
 
     def show(self,imtype='r'):
         if imtype[0] == 'c':
@@ -634,8 +634,8 @@ class Img:
                 self.drawLat()
                 plt.title('(%d, %d)  %.2f K' % (i,j,self.residual))
 
-                
-        
+
+
 #################END OF CLASS################
 def showImage(x,y,image,norm='lin'):
     """This assumes that the 'image' is in data mode and imshows a flipud version"""
@@ -647,7 +647,7 @@ def showImage(x,y,image,norm='lin'):
         plt.imshow(show,extent=extent)
     cbar = plt.colorbar()
     cbar.ax.set_ylabel('K',rotation='horizontal')
-    
+
 def diffOLD(image1,res1,image2,res2,resize='up',bestFit=True,plot=False):
     """Diff'ing centered images with size(image1) > size(image2):
           return  image1 - resize(image2)
@@ -662,7 +662,7 @@ def diffOLD(image1,res1,image2,res2,resize='up',bestFit=True,plot=False):
             factor = 1.0/factor
         elif factor > 1.0 and resize=='down':
             factor = 1.0/factor
-        if (res1 < res2 and resize=='up') or (res2 < res1 and resize=='down'):       
+        if (res1 < res2 and resize=='up') or (res2 < res1 and resize=='down'):
             image2 = misc.imresize(image2,factor,interp='bilinear')
             maxOut = float(np.max(image2))
             image2 = img_max[1]*(image2/maxOut)
@@ -701,7 +701,7 @@ def diffOLD(image1,res1,image2,res2,resize='up',bestFit=True,plot=False):
         i_best = 0
         j_best = 0
     # difference images
-    
+
     diffImage = np.zeros(np.shape(image2))
     for i in range( -center2[0], center2[0]+extra[0] ):
         for j in range( -center2[1], center2[1]+extra[1] ):
@@ -798,7 +798,7 @@ def convolvend(array, kernel, boundary='fill', fill_value=0,
     min_wt: float
         If ignoring NANs/zeros, force all grid points with a weight less than
         this value to NAN (the weight of a grid point with *no* ignored
-        neighbors is 1.0).  
+        neighbors is 1.0).
         If `min_wt` == 0.0, then all zero-weight points will be set to zero
         instead of NAN (which they would be otherwise, because 1/0 = nan).
         See the examples below
@@ -1056,4 +1056,3 @@ def convolvend(array, kernel, boundary='fill', fill_value=0,
         return result
     else:
         return rifft.real
-
