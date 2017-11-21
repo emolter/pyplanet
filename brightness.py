@@ -38,14 +38,13 @@ class Brightness():
             v[2] = 100.0 * math.ceil(atm.gas[atm.config.C['P']][-1] / 100.0)
             v[3] = 1.0E-7 * math.ceil(atm.gas[atm.config.C['P']][0] / 1E-7)
             plt.axis(v)
-            plt.xlabel(utils.alphaUnits)
+            plt.xlabel(utils.alphaUnit)
             plt.ylabel('P [bars]')
             plt.legend()
             # lgd=plt.legend(loc='upper left',bbox_to_anchor=(1,1))
             # lgd.set_visible(True)  # This is just to remind me...
 
     def __layerAbsorp__(self, freqs, atm, alpha):
-        alphaUnits = 'invcm'
         numLayers = len(atm.gas[0])
         layerAlp = []
         P = atm.gas[atm.config.C['P']]
@@ -56,7 +55,7 @@ class Brightness():
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
             sys.stdout.flush()
             layerAlp.append(alpha.getAlpha(freqs, T[layer], P[layer], atm.gas[:, layer], atm.config.C, atm.cloud[:, layer],
-                            atm.config.Cl, units=alphaUnits, verbosity=self.verbosity))
+                            atm.config.Cl, units=utils.alphaUnit, verbosity=self.verbosity))
         layerAlp = np.array(layerAlp).transpose()
         print(' ')
         return layerAlp
@@ -97,7 +96,6 @@ class Brightness():
         if alpha.config.Doppler:
             P = atm.gas[atm.config.C['P']]
             T = atm.gas[atm.config.C['T']]
-            alphaUnits = 'invcm'
             print('')
 
         for i in range(len(self.path.ds) - 1):
@@ -116,9 +114,9 @@ class Brightness():
                     fshifted = [[f / self.path.doppler[i]], [f / self.path.doppler[i + 1]]]
                     print('\rdoppler corrected frequency at layer', i, end='')
                     a1 = alpha.getAlpha(fshifted[0], T[ii1], P[ii1], atm.gas[:, ii1], atm.config.C, atm.cloud[:, ii1],
-                                        atm.config.Cl, units=alphaUnits, verbosity=False)
+                                        atm.config.Cl, units=utils.alphaUnit, verbosity=False)
                     a0 = alpha.getAlpha(fshifted[1], T[ii], P[ii], atm.gas[:, ii], atm.config.C, atm.cloud[:, ii],
-                                        atm.config.Cl, units=alphaUnits, verbosity=False)
+                                        atm.config.Cl, units=utils.alphaUnit, verbosity=False)
                 dtau = (a0 + a1) * ds / 2.0
                 taus.append(self.tau[i][j] + dtau)         # this is tau_(i+1)
                 T1 = atm.gas[atm.config.C['T']][ii1]

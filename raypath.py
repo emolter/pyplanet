@@ -279,12 +279,11 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True)
         else:
             dsmuappend = ds[i] / (r4ds[i] - r4ds[i + 1])
         dsmu.append(dsmuappend)
-    plt.figure('test_ds')
-    plt.plot(dsmu)
-    plt.plot([0, 1499], [1.0 / mu, 1.0 / mu])
-
     path.update(ds=ds, layer4ds=layer4ds, r4ds=r4ds, P4ds=P4ds, doppler=doppler, tip=tip, rotate=rotate, rNorm=rNorm)
     if plot:
+        plt.figure('test_ds')
+        plt.plot(dsmu)
+        plt.plot([0, 1499], [1.0 / mu, 1.0 / mu])
         plotStuff(r=np.array(r), ray=path)
     del s, r, n, ds, layer4ds, r4ds, P4ds, geoid, req, nr
     return path

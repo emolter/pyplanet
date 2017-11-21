@@ -41,7 +41,7 @@ class Planet:
         self.imSize = None
 
         print('Planetary modeling  (ver {})\n'.format(version))
-        print("PLANET.PY_L41:  In alpha, clouds_idp need otherPar['refr'] - still?")
+        print("PLANET.PY_L44:  In alpha, clouds_idp need otherPar['refr'] - still?")
         s = 'Need to fix batch mode stuff'
         print(s * 9)
 
@@ -129,8 +129,7 @@ class Planet:
         for i, bv in enumerate(b):
             if self.verbosity > 1:
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
-            Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, plot=self.plot,
-                                     discAverage=(self.bType == 'disc'))
+            Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, discAverage=(self.bType == 'disc'))
             if self.bright.path is not None and self.rNorm is None:
                 self.rNorm = self.bright.path.rNorm
             if self.bright.path is not None and self.tip is None:

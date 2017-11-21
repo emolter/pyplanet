@@ -16,6 +16,7 @@ processingFreqUnit = 'GHz'  	# alpha assumes this unit
 processingAtmLayerUnit = 'km'   # alpha assumes this unit for layers
 processingPressureUnit = 'bars'
 processingAccelUnit = 'mpersec2'
+alphaUnit = 'invcm'
 speedOfLight = 2.9979E8     	# m/s
 kB = 1.3806503E-23          	# m2 kg s-2 K-1  Boltzmann's constant
 hP = 6.626068E-34       	# m2 kg / s	 Planck's constant
