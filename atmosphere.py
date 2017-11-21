@@ -53,7 +53,7 @@ class Atmosphere:
 
         print('Planet ' + self.planet)
         if self.config.gasType == 'read':  # this assumes that cloudType is then also 'read'
-            utils.log(self.logFile, '\tReading from: ' + self.config.path, True)
+            utils.log(self.logFile, '\tReading from: ' + self.config.filename, True)
             utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, True)
             utils.log(self.logFile, '\tCloud file:  ' + self.config.cloudFile, True)
         if verbosity:

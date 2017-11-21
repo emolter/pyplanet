@@ -49,7 +49,8 @@ class Planet:
             return
 
         #  ##Set up log file
-        self.logFile = 'Logs/{}_{}.log'.format(self.planet, datetime.datetime.now().strftime("%Y%m%d_%H%M"))
+        runStart = datetime.datetime.now()
+        self.logFile = 'Logs/{}_{}.log'.format(self.planet, runStart.strftime("%Y%m%d_%H%M"))
         self.log = utils.setupLogFile(self.logFile)
         utils.log(self.log, self.planet + ' start ' + str(runStart), True)
 

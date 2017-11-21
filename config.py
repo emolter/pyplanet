@@ -18,6 +18,7 @@ class planetConfig:
         planet = string.capitalize(planet)
         self.planet = planet
         self.verbosity = verbosity
+        self.filename = configFile
         self.logFile = utils.setupLogFile(log)
         self.possibleConstituents = ['H2', 'HE', 'CH4', 'NH3', 'H2O', 'H2S', 'PH3', 'CO', 'CO13', 'HCN']
         self.possibleClouds = ['SOLN', 'H2O', 'NH4SH', 'NH3', 'H2S', 'CH4', 'AR', 'PH3']
