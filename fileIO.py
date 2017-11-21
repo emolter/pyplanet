@@ -5,18 +5,90 @@ import prog_path
 import utils
 
 
-class TBfile(object):
-    def __init__(self, directory='Output'):
-        self.header = {}
-        self.ftype = 'spec'  # or 'img'
-        self.directory = directory
+class FileIO(object):
+    def __init__(self, outputType):
+        self.outputType = outputType
 
-    def __str__(self):
-        print('TBfile')
+    def write(self, outputFile, outType, freqs, freqUnit, b, Tb, header):
+        with open(outputFile, 'w') as fp:
+            self.__writeHeader(header, fp)
+            if outType.lower() == 'image':
+                self.__writeImage(fp, Tb)
+            elif outType.lower() == 'spectrum':
+                self.__writeSpectrum(fp, freqs, freqUnit, b, Tb)
+            elif outType.lower() == 'profile':
+                self.__writeProfile(fp, freqs, freqUnit, b, Tb)
+            else:
+                print("Invalid output type: {}".format(outType))
+        return outputFile
 
-    def write(self, fn=None, directory=None):
-        print("For now, this is done in planet.py starting at line 163")
-        print("Eventually pull it over to TBfile.py")
+    def __writeSpectrum(self, fp, freqs, freqUnit, b, Tb):
+        fp_lineoutput = open('specoutputline.dat', 'w')
+        if self.outputType.lower() == 'frequency':
+            s = '# {}  K@b  \t'.format(freqUnit)
+        elif self.outputType.lower() == 'wavelength':
+            s = '# cm   K@b  \t'
+        else:
+            s = '# {}    cm    K@b  \t'.format(freqUnit)
+        for i, bv in enumerate(b):
+            s += '({:5.3f},{:5.3f})\t'.format(bv[0], bv[1])
+        s = s.strip('\t')
+        s += '\n'
+        fp.write(s)
+        for i, f in enumerate(freqs):
+            wlcm = 100.0 * utils.speedOfLight / (f * utils.Units[freqUnit])
+            if self.outputType == 'frequency':
+                s = '{:.2f}\t  '.format(f)
+            elif self.outputType == 'wavelength':
+                s = '{:.4f}\t  '.format(wlcm)
+            else:
+                s = '{:.2f}     {:.4f} \t '.format(f, wlcm)
+            for j in range(len(b)):
+                s += '  {:7.2f}  \t'.format(Tb[j][i])
+            s = s.strip()
+            s += '\n'
+            fp_lineoutput.write(s)
+            fp.write(s)
+        fp_lineoutput.close()
+
+    def __writeProfile(self, fp, freqs, freqUnit, b, Tb):
+        if self.outputType == 'frequency':
+            s = '# b  K@{} \t'.format(freqUnit)
+        elif self.outputType == 'wavelength':
+            s = '# b  K@cm  \t'
+        else:
+            s = '# b  K@{},cm  \t'.format(freqUnit)
+        for i, fv in enumerate(freqs):
+            wlcm = 100.0 * utils.speedOfLight / (fv * utils.Units[freqUnit])
+            if self.outputType == 'frequency':
+                s += '  {:9.4f}   \t'.format(fv)
+            elif self.outputType == 'wavelength':
+                s += '  {:.4f}   \t'.format(wlcm)
+            else:
+                s += ' {:.2f},{:.4f}\t'.format(fv, wlcm)
+        s.strip('\t')
+        s += '\n'
+        fp.write(s)
+        bs = []
+        for i, bv in enumerate(b):
+            s = '{:5.3f} {:5.3f}\t'.format(bv[0], bv[1])
+            bs.append(math.sqrt(bv[0]**2 + bv[1]**2))
+            for j in range(len(freqs)):
+                s += ' {:7.2f}\t '.format(Tb[i][j])
+            s += '\n'
+            fp.write(s)
+
+    def __writeImage(self, fp, Tb):
+        for data in Tb:
+            s = ''
+            for d in data:
+                s += '{:7.2f}\t'.format(d)
+            s += '\n'
+            fp.write(s)
+
+    def __writeHeader(self, header, fp):
+        for hdr in header:
+            fp.write(header[hdr])
 
     def flist(self, fd=None, directory=None):
         """This generates the list of filenames to be opened - doesn't check for existence"""
@@ -181,7 +253,7 @@ class TBfile(object):
                                 try:
                                     ff = float(f)
                                 except ValueError:
-                                    print line
+                                    print(line)
                                     continue
                                 freqs.append(ff)
                                 print('{:.3f} {}'.format(ff, 'GHz_hardcoded'), end='')
@@ -215,7 +287,7 @@ class TBfile(object):
         """Parses the pyPlanet image header"""
         for hdr in headerText:
             hdr = hdr.strip('#').strip()
-            print hdr
+            print(hdr)
             updateKey = False
             if ':' in hdr:
                 updateKey = True

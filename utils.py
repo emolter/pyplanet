@@ -60,11 +60,7 @@ def setupLogFile(log):
     if type(log) == file:
         logfp = log
     elif type(log) == str:
-        try:
-            logfp = open(log, 'a')
-        except IOError:
-            print(log, ' not found.  No logging will be done.')
-            return None
+        logfp = open(log, 'a')
         print('setup Log:  Logging to ', log)
     else:
         logfp = None

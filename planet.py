@@ -12,6 +12,7 @@ import alpha
 import brightness as bright
 import data_handling
 import utils
+import fileIO
 
 version = '1.1'
 
@@ -30,7 +31,6 @@ class Planet:
         planetList = ['Jupiter', 'Neptune', 'Uranus']
         self.planet = string.capitalize(name)
         self.batch_mode = batch_mode
-        self.outputType = outputType
         self.plot = plot
         self.verbosity = verbosity
         self.header = {}
@@ -71,6 +71,9 @@ class Planet:
         #  ## Next compute radiometric properties - initialize bright and return data class
         self.bright = bright.Brightness(log=self.log, verbosity=verbosity, plot=plot)
         self.data_return = data_handling.DataReturn()
+
+        # ## Create fileIO class
+        self.fIO = fileIO.FileIO(outputType)
 
     def run(self, freqs='reuse', b=[0.0, 0.0], freqUnit='GHz', block=[1, 1], orientation=None):
         """Runs the model to produce the brightness temperature, weighting functions etc etc
@@ -115,7 +118,6 @@ class Planet:
         if outType == 'Image':  # We now treat it as an image at one frequency
             if self.verbosity > 1:
                 print('imgSize = {} x {}'.format(self.imSize[0], self.imSize[1]))
-            self.Tb_img = []
             imtmp = []
             if abs(block[1]) > 1:
                 btmp = '_{:02d}of{:02d}'.format(block[0], abs(block[1]))
@@ -130,110 +132,51 @@ class Planet:
             if self.verbosity > 1:
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
             Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, discAverage=(self.bType == 'disc'))
-            if self.bright.path is not None and self.rNorm is None:
-                self.rNorm = self.bright.path.rNorm
-            if self.bright.path is not None and self.tip is None:
-                self.tip = self.bright.path.tip
-            if self.bright.path is not None and self.rotate is None:
-                self.rotate = self.bright.path.rotate
+            if self.bright.path is not None:
+                if self.rNorm is None:
+                    self.rNorm = self.bright.path.rNorm
+                if self.tip is None:
+                    self.tip = self.bright.path.tip
+                if self.rotate is None:
+                    self.rotate = self.bright.path.rotate
             if Tbt is None:  # I've now done away with returning None by returning T_cmb in brightness.py (at least I thought so...)
                 Tbt = []
                 for i in range(len(freqs)):
                     Tbt.append(utils.T_cmb)
             else:            # ... so should always go to 'else'
                 hit_b.append(bv)
-            self.Tb.append(Tbt)
-            self.data_return.Tb.append(Tbt)
             if outType == 'Image':
                 imtmp.append(Tbt[0])
                 if not (i + 1) % self.imSize[0]:
-                    self.Tb_img.append(imtmp)
+                    self.Tb.append(imtmp)
                     imtmp = []
+            else:
+                self.Tb.append(Tbt)
         self.log.flush()
         self.data_return.Tb = self.Tb
+        self.data_return.header = self.header
+        missed_planet = self.rNorm is None
 
         #  ##Write output files (this needs to be compatible with TBfile  -- eventually should incorporate it in there###
-        datFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
+        outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
         if self.verbosity > 2:
             print('\nWriting {} data to {}'.format(outType, datFile))
-        df = open(datFile, 'w')
-        self.__setHeader__(self.rNorm)
-        self.__writeHeader__(df)
-        if outType == 'Image':
-            for data0 in self.Tb_img:
-                s = ''
-                for data1 in data0:
-                    s += '%7.2f\t' % (data1)
-                s += '\n'
-                df.write(s)
-        elif outType == 'Spectrum':
-            fp_lineoutput = open('specoutputline.dat', 'w')
-            if self.outputType.lower() == 'frequency':
-                s = '# %s  K@b  \t' % (self.freqUnit)
-            elif self.outputType.lower() == 'wavelength':
-                s = '# cm   K@b  \t'
-            else:
-                s = '# %s    cm    K@b  \t' % (self.freqUnit)
-            for i, bv in enumerate(hit_b):
-                s += '(%5.3f,%5.3f)\t' % (bv[0], bv[1])
-            s = s.strip('\t')
-            s += '\n'
-            df.write(s)
-            for i, f in enumerate(freqs):
-                wlcm = 100.0 * utils.speedOfLight / (f * utils.Units[self.freqUnit])
-                if self.outputType == 'frequency':
-                    s = '%.2f\t  ' % (f)
-                elif self.outputType == 'wavelength':
-                    s = '%.4f\t  ' % (wlcm)
-                else:
-                    s = '%.2f     %.4f \t ' % (f, wlcm)
-                for j in range(len(hit_b)):
-                    s += '  %7.2f  \t' % (self.Tb[j][i])
-                s = s.strip()
-                s += '\n'
-                fp_lineoutput.write(s)
-                df.write(s)
-            fp_lineoutput.close()
-        elif outType == 'Profile':
-            if self.outputType == 'frequency':
-                s = '# b  K@%s \t' % (self.freqUnit)
-            elif self.outputType == 'wavelength':
-                s = '# b  K@cm  \t'
-            else:
-                s = '# b  K@GHz,cm  \t'
-            for i, fv in enumerate(freqs):
-                wlcm = 100.0 * utils.speedOfLight / (fv * utils.Units[self.freqUnit])
-                if self.outputType == 'frequency':
-                    s += '  %9.4f   \t' % (fv)
-                elif self.outputType == 'wavelength':
-                    s += '  %.4f   \t' % (wlcm)
-                else:
-                    s += ' %.2f,%.4f\t' % (fv, wlcm)
-            s.strip('\t')
-            s += '\n'
-            df.write(s)
-            bs = []
-            for i, bv in enumerate(hit_b):
-                s = '%5.3f %5.3f\t' % (bv[0], bv[1])
-                bs.append(math.sqrt(bv[0]**2 + bv[1]**2))
-                for j in range(len(freqs)):
-                    s += ' %7.2f\t ' % (self.Tb[i][j])
-                s += '\n'
-                df.write(s)
-            if plot:
-                plt.figure("Profile")
-                Tbtr = np.transpose(self.Tb)
-                for j in range(len(freqs)):
-                    frqs = ('%.2f %s' % (self.freqs[j], self.freqUnit))
-                    plt.plot(bs, Tbtr[j], label=frqs)
-                plt.legend()
-                plt.xlabel('b')
-                plt.ylabel('$T_B$ [K]')
-        df.close()
+        self.__setHeader__(missed_planet)
+        self.fIO.write(outputFile, outType, freqs, freqUnit, hit_b, self.Tb, self.header)
+        if self.plot and outType == 'Profile':
+            plt.figure("Profile")
+            Tbtr = np.transpose(self.Tb)
+            for j in range(len(freqs)):
+                frqs = ('%.2f %s' % (self.freqs[j], self.freqUnit))
+                plt.plot(bs, Tbtr[j], label=frqs)
+            plt.legend()
+            plt.xlabel('b')
+            plt.ylabel('$T_B$ [K]')
+
         return self.data_return
 
-    def __setHeader__(self, intercept):
-        if not intercept:  # didn't intercept the planet
+    def __setHeader__(self, missed_planet):
+        if missed_planet:
             self.header['res'] = '# res not set\n'
             self.header['orientation'] = '# orientation not set\n'
             self.header['aspect'] = '# aspect tip, rotate not set\n'
@@ -254,10 +197,6 @@ class Planet:
         self.header['gtype'] = '# gtype: {}\n'.format(self.config.gtype)
         self.header['radii'] = '# radii:  {:.1f}  {:.1f}  km\n'.format(self.config.Req, self.config.Rpol)
         self.header['distance'] = '# distance:  {} km\n'.format(self.config.distance)
-
-    def __writeHeader__(self, fp):
-        for hdr in self.header:
-            fp.write(self.header[hdr])
 
     def set_b(self, b, block):
         """b has a number of options for different bType:
