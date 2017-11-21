@@ -81,9 +81,11 @@ class Planet:
             orientation:  orientation vector of planet"""
 
         #  ##Set freqs
+        reuse = False
         if freqs == 'reuse':
             if self.freqs is None:
                 raise ValueError('Must set frequencies.')
+            reuse = True
             freqs = self.freqs
             freqUnit = self.freqUnit
         else:
@@ -352,7 +354,7 @@ class Planet:
         if self.batch_mode:
             outType = 'Spectrum'
         # ##Set as self for header information
-        self.outType = outputType
+        self.outType = outType
         self.bType = bType
 
         return b, outType

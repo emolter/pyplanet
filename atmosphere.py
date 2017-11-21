@@ -77,11 +77,11 @@ class Atmosphere:
         self.nAtm = 0
 
         # ## Generate gas profile (gasType is 'read' or 'compute')
-        if gasType in self.gasGen.keys():
+        if gasType not in self.gasGen.keys():
             print('Error:  No such gasType: ', gasType)
             return 0
         else:
-            self.gasGen[gasType](verbosity=verbosity)
+            self.gasGen[gasType](verbosity=self.verbosity)
 
         if not self.batch:
             # ## Generate cloud profile (cloudType is 'read' or 'compute')
@@ -89,28 +89,28 @@ class Atmosphere:
                 print('Error:  No such cloudType: ', cloudType)
                 return 0
             else:
-                self.cloudGen[cloudType](verbosity=verbosity)
+                self.cloudGen[cloudType](verbosity=self.verbosity)
 
             if tweak:  # This loads and calls the module 'tweakFile'
                 self.tweakAtm()
 
             # ## Compute other parameters that are needed
-            if selfconfig.otherType not in self.propGen.keys():
+            if self.config.otherType not in self.propGen.keys():
                 print('Error:  no such otherTpe: ', otherType)
                 return 0
             else:
-                self.propGen[otherType](verbosity=verbosity)
+                self.propGen[otherType](verbosity=self.verbosity)
 
             # ## Put onto common grid
             regridded = regrid.regrid(self, regridType=regridType, Pmin=Pmin, Pmax=Pmax)
             self.nAtm = len(self.gas[0])
 
             angularDiameter = 2.0 * math.atan(self.layerProperty[self.config.LP['R']][0] / self.config.distance)
-            if verbosity:
+            if self.verbosity:
                 print('angular radius = {} arcsec'.format(utils.r2asec(angularDiameter / 2.0)))
 
             # ## Plot data
-            if plot:
+            if self.plot:
                 self.plotTP()
                 self.plotGas()
                 self.plotCloud()
@@ -450,7 +450,7 @@ class Atmosphere:
         _tf = os.path.join(self.config.path, self.config.tweakFile + '.py')
         _tp = open(_tf, 'r')
         dt = _tp.read()
-        utils.log(self.logFile, '======================', _tf, '=====================', False)
+        utils.log(self.logFile, '======================' + _tf + '=====================', False)
         utils.log(self.logFile, dt, False)
         utils.log(self.logFile, '====================================================================', False)
         _tp.close()
