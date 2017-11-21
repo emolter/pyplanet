@@ -22,7 +22,7 @@ RJ       24766.0  km
 GM       0.6835096e7
 Jn       0.0 0.0 0.3539e-2 0.0 -0.28e-4 0.0 0.0
 omega    1.08338255e-4
-zonal    zonalNeptune.dat
+zonal    Neptune/zonalNeptune.dat
 gtype    ellipse
 #
 ### observations

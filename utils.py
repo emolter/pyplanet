@@ -1,5 +1,4 @@
 from __future__ import print_function, absolute_import, division
-import os.path
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import os
@@ -56,19 +55,17 @@ def invertDictionary(dic):
     return e, sk
 
 
-def setupLogFile(log, path='Logs/'):
+def setupLogFile(log):
     if type(log) == file:
         logfp = log
     elif type(log) == str:
-        lf = os.path.join(path, log)
         try:
-            logfp = open(lf, 'a')
+            logfp = open(log, 'a')
         except IOError:
-            print(lf, ' not found.  No logging (and save the whales).')
+            print(log, ' not found.  No logging will be done.')
             return None
-        print('setup Log:  Logging to ', lf)
+        print('setup Log:  Logging to ', log)
     else:
-        log = None
         logfp = None
     return logfp
 

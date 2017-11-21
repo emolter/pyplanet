@@ -5,7 +5,7 @@ import argparse
 import prog_path
 
 overallPath = prog_path.pyPlanetPath
-constitPath = overallPath + '/constituents'
+constitPath = prop_path.constituentPath
 constituents = os.listdir(constitPath)
 
 o = argparse.ArgumentParser(prefix_chars='-+')

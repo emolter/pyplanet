@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
 import string
+import prog_path
 import utils
-import os.path
 
 
 class planetConfig:
-    def __init__(self, planet, configFile='config.par', path=None, log=None, verbosity=False, printHelp=False):
+    def __init__(self, planet, configFile, log=None, verbosity=False, printHelp=False):
         """reads in config file"""
         self.toks = {'gasfile': ['gasFile', str], 'cloudfile': ['cloudFile', str], 'gasfilehdr': ['gasFileHdr', int],
                      'cloudfilehdr': ['cloudFileHdr', int], 'constituents': ['C', str], 'clouds': ['Cl', str], 'tweakfile': ['tweakFile', str],
@@ -19,11 +19,6 @@ class planetConfig:
         self.planet = planet
         self.verbosity = verbosity
         self.logFile = utils.setupLogFile(log)
-        if path:
-            self.path = path
-        else:
-            self.path = planet
-        configFile = os.path.join(self.path, configFile)
         self.possibleConstituents = ['H2', 'HE', 'CH4', 'NH3', 'H2O', 'H2S', 'PH3', 'CO', 'CO13', 'HCN']
         self.possibleClouds = ['SOLN', 'H2O', 'NH4SH', 'NH3', 'H2S', 'CH4', 'AR', 'PH3']
 
@@ -205,8 +200,7 @@ class planetConfig:
         fp.close()
 
         try:
-            filename = os.path.join(self.path, self.zonal)
-            fp = open(filename, 'r')
+            fp = open(self.zonal, 'r')
             self.vwlat = []
             self.vwdat = []
             for line in fp:

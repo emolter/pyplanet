@@ -3,10 +3,9 @@ import string
 import matplotlib.mlab as mlab
 from scipy.interpolate import interp1d
 import numpy as np
-import utils
+import prog_path
 import atmosphere
 import properties
-import os.path
 
 
 def regrid(atm, regridType=None, Pmin=None, Pmax=None):

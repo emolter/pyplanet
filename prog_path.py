@@ -16,3 +16,5 @@ if pyPlanetPath is None:
         path_already_set = True
 if not path_already_set:
     sys.path.append(pyPlanetPath)
+constituentPath = os.path.join(pyPlanetPath, 'constituents')
+sys.path.append(constituentPath)

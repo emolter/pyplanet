@@ -13,7 +13,7 @@ import config as pcfg
 
 
 class Alpha:
-    def __init__(self, path=None, config=None, log=None, verbosity=False, plot=False):
+    def __init__(self, config=None, log=None, verbosity=False, plot=False):
         """Reads in absorption formalisms
            Note that they are all in GHz"""
 
@@ -23,10 +23,8 @@ class Alpha:
         print('\n---Alpha---\n')
 
         # Get possible constituents
-        if path is None:
-            path = prog_path.pyPlanetPath
         possible = []
-        self.constituentsAreAt = os.path.join(path, 'constituents')
+        self.constituentsAreAt = prog_path.constituentPath
         s = 'Reading in absorption modules from ' + self.constituentsAreAt + '\n'
         utils.log(self.log, s, True)
         for d in os.listdir(self.constituentsAreAt):

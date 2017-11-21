@@ -1,7 +1,8 @@
 from __future__ import print_function, absolute_import, division
 import os.path
-import utils
 import numpy as np
+import prog_path
+import utils
 
 
 class TBfile(object):

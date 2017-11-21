@@ -4,6 +4,7 @@ import math
 import string
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 import prog_path
 import atmosphere as atm
 import config as pcfg
@@ -11,154 +12,92 @@ import alpha
 import brightness as bright
 import data_handling
 import utils
-import datetime
 
 version = '1.0'
 
 
 class Planet:
-    def __init__(self, name, freqs=None, b=None, freqUnit='GHz', config='config.par', log='auto', verbosity=0, plot=True):
+    def __init__(self, name, config='planet', batch_mode=False, outputType='frequency', verbosity=0, plot=True):
         """This is the 'executive function class to compute overall planetary emission
-           Arguments here set defaults, however often get set specifically in run. See pyPlanet.pdf for documentation.
            Inputs:
-                name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune' [or 'functions' if you just want to load without running]
-                freqs: options are:
-                    - int/float:  does that one frequency
-                    - list of length 3:  assumes it is [start,stop,step]
-                    - list not of length 3:   does those frequencies
-                b: 'impact parameter' b=1 is the radius of the maximum projected disc.
-                   Determines outType from 'spectrum','profile','image' (along with freqs to some extent)
-                    - doublet list is one position, [0,0] is the center
-                    - float will generate a grid at that spacing, may need to set blocks during run
-                    - list of length > 2, assumes a line of those locations at angle of first entry (deg)
-                         if the length is four it assumes [angle,start,stop,step]
-                    - 'disc' for disc-averaged
-                    - 'stamp' for postage stamp (queries values)
-                    - list of doublet lists, evaluate at those locations
-               freqUnit: unit for above
-               config:  config file name [config.par], 'manual' [equivalent none]
-               log:  log data from run, either a file name, a 'no', or 'auto' (for auto filename)
-               verbosity:  integer 0=low to 2=high
-               plot:  True/False"""
+                name:  'Jupiter', 'Uranus', 'Neptune'
+                config:  config file name.  If 'planet' sets to <name>/config.par
+                batch_mode:  enable batch mode processing
+                outputType:  'frequency', 'wavelength' or 'both'
+                verbosity:  integer 0=low to 2=high
+                plot:  True/False"""
 
-        if name.lower()[0:4] == 'func':
-            return
-
-        planetList = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
+        planetList = ['Jupiter', 'Neptune', 'Uranus']
         self.planet = string.capitalize(name)
-
-        runStart = datetime.datetime.now()
+        self.batch_mode = batch_mode
+        self.outputType = outputType
+        self.plot = plot
+        self.verbosity = verbosity
         self.header = {}
+        self.imrow = False
+        self.freqs = None
+        self.freqUnit = None
+        self.b = None
+        self.imSize = None
 
         print('Planetary modeling  (ver {})\n'.format(version))
-        print("PLANET.PY_L53:  In alpha, clouds_idp need otherPar['refr'] - still?")
+        print("PLANET.PY_L41:  In alpha, clouds_idp need otherPar['refr'] - still?")
 
-        if self.planet in planetList:
-            #  ##Set up log file
-            if string.lower(log) == 'auto':
-                self.logFile = '%s_%d%02d%02d_%02d%02d.log' % (self.planet, runStart.year, runStart.month, runStart.day, runStart.hour, runStart.minute)
-            elif string.lower(log) == 'no':
-                self.logFile = None
-            else:
-                self.logFile = log
-            self.log = utils.setupLogFile(self.logFile, path='Logs/')
-            utils.log(self.log, self.planet + ' start ' + str(runStart), True)
-            self.plot = plot
-            self.verbosity = verbosity
+        if self.planet not in planetList:
+            return
 
-            #  ## Some convenience values for the specific Neptune observations
-            self.fvla_old = [4.86, 8.46, 14.94, 22.46, 43.34]
-            self.fvla_new = [1.5, 3.0, 6.0, 10., 15., 22., 33., 45.]
-            self.fvla = [3.0, 6.0, 10.0, 15.0, 33.0]
-            anglecap = 13.24
-            bvalcap = [0.5, 0.6, 0.7, 0.8, 0.9, 0.925, 0.95]
-            self.bvla = []
-            for bval in bvalcap:
-                self.bvla.append([-bval * math.sin(utils.d2r(anglecap)), -bval * math.cos(utils.d2r(anglecap))])
+        #  ##Set up log file
+        self.logFile = 'Logs/{}_{}.log'.format(self.planet, datetime.datetime.now().strftime("%Y%m%d_%H%M"))
+        self.log = utils.setupLogFile(self.logFile)
+        utils.log(self.log, self.planet + ' start ' + str(runStart), True)
 
-            #  ## Get frequencies
-            if freqs is None:
-                self.freqUnit = freqUnit
-            else:
-                freqs = self.__freqRequest__(freqs, freqUnit)
+        #  ## Get config
+        if config.lower() == 'planet':
+            config = self.planet + '/config.par'
+        self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log, verbosity=verbosity)
 
-            #  ## Get viewing
-            self.imRow = False
-            if b is not None:
-                b = self.__bRequest__(b, [1, 1])
+        #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
+        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbosity=verbosity, plot=plot)
+        self.atm.run()
+        self.log.flush()
 
-            #  ## Get config
-            if config == 'manual' or config == 'none':
-                config = None
-            self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log, verbosity=verbosity)
+        #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
+        self.alpha = alpha.Alpha(config=self.config, log=self.log, verbosity=verbosity, plot=plot)
+        self.log.flush()
 
-            #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
-            self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbosity=verbosity, plot=plot)
-            self.atm.run()
-            self.log.flush()
+        #  ## Next compute radiometric properties - initialize bright and return data class
+        self.bright = bright.Brightness(log=self.log, verbosity=verbosity, plot=plot)
+        self.data_return = data_handling.DataReturn()
 
-            #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
-            self.alpha = alpha.Alpha(config=self.config, log=self.log, verbosity=verbosity, plot=plot)
-            #  self.alpha.test(f=0,verbosity=True,plot=True)
-            self.log.flush()
-
-            #  ## Next compute radiometric properties - initialize bright and return data class
-            self.bright = bright.Brightness(log=self.log, verbosity=verbosity, plot=plot)
-            self.data_return = data_handling.DataReturn()
-
-    def run(self, freqs=[1.0, 10.0, 1.0], b=[0.0, 0.0], freqUnit='GHz', orientation=None, block=[1, 1], outputType='frequency'):
+    def run(self, freqs='reuse', b=[0.0, 0.0], freqUnit='GHz', block=[1, 1], orientation=None):
         """Runs the model to produce the brightness temperature, weighting functions etc etc
-           b = 0.04175 is a good value for Neptune images (don't remember why at the moment...)
-           outputType sets whether frequency, wavelength, or both are written
-           if outputType is 'batch', it forces the outType to be 'Spectrum' and outputType to be 'frequency'"""
-
-        self.imSize = None
-        self.outType = None
-        self.bType = None
+            freqs:  frequency request as set in set_freq.  If 'reuse' it won't recompute absorption/layer (allows many b)
+            b:  "impact parameter" request as set in set_b
+            freqUnit:  unit that freqs is in
+            block:  blocks to produce image (related to memory error...)
+            orientation:  orientation vector of planet"""
 
         #  ##Set freqs
-        reuse = False
-        if freqs is None and freqUnit is None:
+        if freqs == 'reuse':
+            if self.freqs is None:
+                raise ValueError('Must set frequencies.')
             freqs = self.freqs
             freqUnit = self.freqUnit
-        elif freqs == 'reuse':
-            freqs = self.freqs
-            reuse = True
         else:
-            if freqUnit is None:
-                freqUnit = 'GHz'
-                self.freqUnit = freqUnit
-            if freqs is None:
-                freqs = self.freqs
-            else:
-                freqs = self.__freqRequest__(freqs, freqUnit)
-            freqUnit = self.freqUnit
-        self.freqs = freqs
-        self.freqUnit = freqUnit
-        self.data_return.f = self.freqs
+            freqs, freqUnit = self.set_freq(freqs, freqUnit)
+            self.bright.resetLayer()
+        self.data_return.f = freqs
 
-        #  ##Set b
-        if b is None:
-            b = self.b
-        else:
-            b = self.__bRequest__(b, block)
-        if self.outType is None or self.outType == 'Spectrum' or self.outType == 'Profile':
-            if len(b) > 5 * len(freqs):
-                self.outType = 'Profile'
-            else:
-                self.outType = 'Spectrum'
-        if outputType == 'batch':
-            self.outType = 'Spectrum'
-            outputType = 'frequency'
-        self.b = b
-        self.data_return.b = self.b
-        if self.verbosity > 2:
-            print('outType = {}'.format(self.outType))
-        if self.outType == 'Image' and len(freqs) > 1:
+        #  ##Set b, etc
+        b, outType = self.set_b(b, block)
+        self.data_return.b = b
+        if outType == 'Image' and len(freqs) > 1:
             print('Warning:  Image must be at only one frequency')
-            print('Using {} {}'.format(freqs[0], self.freqUnit))
+            print('Using {} {}'.format(freqs[0], freqUnit))
             self.freqs = list(freqs[0])
             freqs = self.freqs
+        if self.verbosity > 2:
+            print('outType = {}'.format(outType))
 
         #  ##Start
         runStart = datetime.datetime.now()
@@ -168,7 +107,7 @@ class Planet:
         self.rNorm = None
         self.tip = None
         self.rotate = None
-        if self.outType == 'Image':  # We now treat it as an image at one frequency
+        if outType == 'Image':  # We now treat it as an image at one frequency
             if self.verbosity > 1:
                 print('imgSize = {} x {}'.format(self.imSize[0], self.imSize[1]))
             self.Tb_img = []
@@ -178,14 +117,14 @@ class Planet:
             else:
                 btmp = ''
 
-        if not reuse:
-            if not self.config.Doppler:
-                self.bright.layerAbsorption(freqs, self.atm, self.alpha)
+        # Get the absorption in each layer once, unless you are reusing or doing Doppler
+        if not reuse and not self.config.Doppler:
+            self.bright.layerAbsorption(freqs, self.atm, self.alpha)
 
         for i, bv in enumerate(b):
             if self.verbosity > 1:
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
-            Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, plot=not(self.outType == 'Image'),
+            Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, plot=self.plot,
                                      discAverage=(self.bType == 'disc'))
             if self.bright.path is not None and self.rNorm is None:
                 self.rNorm = self.bright.path.rNorm
@@ -201,7 +140,7 @@ class Planet:
                 hit_b.append(bv)
             self.Tb.append(Tbt)
             self.data_return.Tb.append(Tbt)
-            if self.outType == 'Image':
+            if outType == 'Image':
                 imtmp.append(Tbt[0])
                 if not (i + 1) % self.imSize[0]:
                     self.Tb_img.append(imtmp)
@@ -210,25 +149,24 @@ class Planet:
         self.data_return.Tb = self.Tb
 
         #  ##Write output files (this needs to be compatible with TBfile  -- eventually should incorporate it in there###
-        datFile = 'Output/%s_%s%s_%d%02d%02d_%02d%02d.dat' % (self.planet, self.outType, btmp,
-                                                              runStart.year, runStart.month, runStart.day, runStart.hour, runStart.minute)
+        datFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
         if self.verbosity > 2:
-            print('\nWriting {} data to {}'.format(self.outType, datFile))
+            print('\nWriting {} data to {}'.format(outType, datFile))
         df = open(datFile, 'w')
         self.__setHeader__(self.rNorm)
         self.__writeHeader__(df)
-        if self.outType == 'Image':
+        if outType == 'Image':
             for data0 in self.Tb_img:
                 s = ''
                 for data1 in data0:
                     s += '%7.2f\t' % (data1)
                 s += '\n'
                 df.write(s)
-        elif self.outType == 'Spectrum':
+        elif outType == 'Spectrum':
             fp_lineoutput = open('specoutputline.dat', 'w')
-            if outputType == 'frequency':
+            if self.outputType.lower() == 'frequency':
                 s = '# %s  K@b  \t' % (self.freqUnit)
-            elif outputType == 'wavelength':
+            elif self.outputType.lower() == 'wavelength':
                 s = '# cm   K@b  \t'
             else:
                 s = '# %s    cm    K@b  \t' % (self.freqUnit)
@@ -239,9 +177,9 @@ class Planet:
             df.write(s)
             for i, f in enumerate(freqs):
                 wlcm = 100.0 * utils.speedOfLight / (f * utils.Units[self.freqUnit])
-                if outputType == 'frequency':
+                if self.outputType == 'frequency':
                     s = '%.2f\t  ' % (f)
-                elif outputType == 'wavelength':
+                elif self.outputType == 'wavelength':
                     s = '%.4f\t  ' % (wlcm)
                 else:
                     s = '%.2f     %.4f \t ' % (f, wlcm)
@@ -252,18 +190,18 @@ class Planet:
                 fp_lineoutput.write(s)
                 df.write(s)
             fp_lineoutput.close()
-        elif self.outType == 'Profile':
-            if outputType == 'frequency':
+        elif outType == 'Profile':
+            if self.outputType == 'frequency':
                 s = '# b  K@%s \t' % (self.freqUnit)
-            elif outputType == 'wavelength':
+            elif self.outputType == 'wavelength':
                 s = '# b  K@cm  \t'
             else:
                 s = '# b  K@GHz,cm  \t'
             for i, fv in enumerate(freqs):
                 wlcm = 100.0 * utils.speedOfLight / (fv * utils.Units[self.freqUnit])
-                if outputType == 'frequency':
+                if self.outputType == 'frequency':
                     s += '  %9.4f   \t' % (fv)
-                elif outputType == 'wavelength':
+                elif self.outputType == 'wavelength':
                     s += '  %.4f   \t' % (wlcm)
                 else:
                     s += ' %.2f,%.4f\t' % (fv, wlcm)
@@ -287,8 +225,6 @@ class Planet:
                 plt.legend()
                 plt.xlabel('b')
                 plt.ylabel('$T_B$ [K]')
-        else:
-            print('Invalid outType:  ', self.outType)
         df.close()
         return self.data_return
 
@@ -319,21 +255,22 @@ class Planet:
         for hdr in self.header:
             fp.write(self.header[hdr])
 
-    def __bRequest__(self, b, block):
+    def set_b(self, b, block):
         """b has a number of options for different bType:
                'points':  discrete number of points
                'line':  radial lines
                'image':  full image
                'stamp':  small image of region
                'disc':  disc-averaged
-           b, bType and outType get set"""
-        self.bType = None
+           outType can be 'image', 'spectrum', 'profile'
+           b, bType and outType get set
+           bType is never used anywhere..."""
         self.header['b'] = '# b request:  {}  {}\n'.format(str(b), str(block))
 
         self.imSize = None
         if type(b) == float:  # this generates a grid at that spacing and blocking
-            self.bType = 'image'
-            self.outType = 'Image'
+            bType = 'image'
+            outType = 'Image'
             pb = []
             grid = -1.0 * np.flipud(np.arange(b, 1.5 + b, b))
             grid = np.concatenate((grid, np.arange(0.0, 1.5 + b, b)))
@@ -350,15 +287,16 @@ class Planet:
             b = pb
             self.imSize = [len(grid), len(b) / len(grid)]
         elif type(b) == str:
-            if b.lower() == 'disc':
+            bType = b.lower()
+            if bType not in ['disc', 'stamp']:
+                raise ValueError('Invalid b request string')
+            if bType == 'disc':
                 b = [[0.0, 0.0]]
-                self.bType = 'disc'
-                self.outType = 'Spectrum'
+                outType = 'Spectrum'
                 print('Setting to disc-average')
-            elif b.lower() == 'stamp':
-                self.bType = 'stamp'
-                self.outType = 'Image'
-                print('Setting to postage stamp')
+            elif bType == 'stamp':
+                outType = 'Image'
+                print('Setting to postage stamp.  Need more information')
                 try:
                     bres = float(raw_input('...Input postage stamp resolution in b-units:  '))
                 except ValueError:
@@ -383,19 +321,15 @@ class Planet:
                     b = pb
                     xbr = len(np.arange(bymin, bymax + bres / 2.0, bres))
                     self.imSize = [xbr, len(b) / xbr]
-            else:
-                self.bType = b
-                self.outType = None
-                b = None
         elif len(np.shape(b)) == 1:     # this makes:
             pb = []
             if len(b) == 2:
-                self.bType = 'points'
-                self.outType = 'Spectrum'
+                bType = 'points'
+                outType = 'Spectrum'
                 pb.append(b)            # ...data at one location
             else:
-                self.bType = 'line'
-                self.outType = 'Profile'
+                bType = 'line'
+                outType = 'Profile'
                 angle = utils.d2r(b[0])
                 del b[0]
                 if len(b) == 3:
@@ -403,17 +337,24 @@ class Planet:
                 for v in b:
                     pb.append([v * math.cos(angle), v * math.sin(angle)])  # ...a line at given angle (angle is first entry)
             b = pb
+        elif len(np.shape(b)) == 2:
+            bType = 'points'
+            if len(b) > 5:
+                outType = 'Profile'
+            else:
+                outType = 'Spectrum'
         else:
-            self.bType = b
-            self.outType = None
-            b = None
-        if not b:
-            print('Invalid bType ({}), but soldiering on'.format(self.bType))
-            self.bType = None
-        self.b = b
-        return b
+            raise ValueError('Invalid format for b.')
 
-    def __freqRequest__(self, freqs, freqUnit):
+        if self.batch_mode:
+            outType = 'Spectrum'
+        # ##Set as self for header information
+        self.outType = outputType
+        self.bType = bType
+
+        return b, outType
+
+    def set_freq(self, freqs, freqUnit):
         """ Internal processing of frequency list.
                if freqs is a string, it reads frequencies from that file
                if freqs is a scalar, it is made to a list of length 1
@@ -449,8 +390,7 @@ class Planet:
                         freqs.append(f)
                         f += fstep
             else:
-                print('Invalid format for frequency request')
-                return None
+                raise ValueError('Invalid format for frequency request')
         for i in range(len(freqs)):
             freqs[i] *= utils.Units[freqUnit] / utils.Units[utils.processingFreqUnit]
         if len(freqs) > 1:
@@ -459,5 +399,5 @@ class Planet:
             s = '{} at {} {}'.format(self.planet, freqs[0], utils.processingFreqUnit)
         utils.log(self.log, s, True)
         self.freqs = freqs
-        self.freqUnit = freqUnit
-        return freqs
+        self.freqUnit = utils.processingFreqUnit
+        return freqs, utils.processingFreqUnit

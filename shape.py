@@ -5,6 +5,7 @@ import scipy.special as scisp
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 import string
+import prog_path
 import utils as u
 import atmosphere
 _X = 0
@@ -84,7 +85,7 @@ class Shape:
     # ##'reference' - fits a geoid at the reference pressure and scales from there
     def __calcFromReference(self, planet, r, pclat=90.0, delta_lng=0.0):
         if type(self.referenceGeoid) == bool:
-            print 'Calculating reference geoid at P_ref=%f' % (planet.config.p_ref)
+            print('Calculating reference geoid at P_ref={}'.format(planet.config.p_ref))
             self.referenceRadius = planet.config.Req
             self.__calcGeoid(planet, planet.config.Req, 90, 0.0)
             self.referenceGeoid = np.array(self.referenceGeoid)
@@ -121,7 +122,7 @@ class Shape:
     # ##'gravity' - does the full thing, but is very time-consuming
     def __calcGeoid(self, planet, r, pclat, delta_lng):
         """Starts at equatorial radius and moves north or south to compute geoid at pclat"""
-        self.calcCounter + =1
+        self.calcCounter += 1
         print('Geoid calc counter: ', self.calcCounter)
 
         if pclat == 0.0:

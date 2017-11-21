@@ -19,7 +19,7 @@ planetDictionary = {'Jupiter': 0, 'Saturn': 1, 'Uranus': 2, 'Neptune': 3}
 
 
 class Atmosphere:
-    def __init__(self, planet, config='config.par', path=None, log=None, verbosity=False, plot=True):
+    def __init__(self, planet, config='config.par', path=None, log=None, batch=False, verbosity=False, plot=True):
         """reads/computes atmospheres.  This should return:
                self.gas
                self.cloud
@@ -33,7 +33,7 @@ class Atmosphere:
         self.verbosity = verbosity
         self.plot = plot
         self.logFile = utils.setupLogFile(log)
-        self.batch = False
+        self.batch = batch
 
         print('\n---Atmosphere of %s---'.format(planet))
         if type(config) == str:
@@ -59,7 +59,7 @@ class Atmosphere:
         if verbosity:
             print(self.config.show())
 
-    def run(self, Pmin=None, Pmax=None, regridType=None, gasType=None, cloudType=None, otherType=None, tweak=True, plot=None, verbosity=None):
+    def run(self, Pmin=None, Pmax=None, regridType=None, gasType=None, cloudType=None, otherType=None, tweak=True):
         """This is the standard pipeline"""
         # ##Set run defaults
         if Pmin is None:
@@ -68,10 +68,6 @@ class Atmosphere:
             Pmax = self.config.pmax
         if regridType is None:
             regridType = self.config.regridType
-        if verbosity is None:
-            verbosity = self.verbosity
-        if plot is None:
-            plot = self.plot
         if gasType is None:
             gasType = self.config.gasType
         if cloudType is None:

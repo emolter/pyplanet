@@ -2,9 +2,10 @@
 from __future__ import absolute_import, division, print_function
 import math
 import matplotlib.pyplot as plt
-import atmosphere
 import numpy as np
 import sys
+import prog_path
+import atmosphere
 import shape
 import utils
 
@@ -237,7 +238,7 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True)
         delta_lng = utils.r2d(math.atan2(np.dot(rnext, xHat), np.dot(rnext, zHat)))
         r2 = geoid.calcShape(atm, req[layer + raypathdir[direction]], pclat, delta_lng)
         if abs(r2 - rNextMag) > 2.0 and layer != 0:
-            print{'Warning:  {} != {} ({} km) at layer {}'.format(r2, rNextMag, r2 - rNextMag, layer))
+            print('Warning:  {} != {} ({} km) at layer {}'.format(r2, rNextMag, r2 - rNextMag, layer))
         r.append(rnext)  # which is also geoid.r, or should be
         n.append(geoid.n)
 
@@ -250,7 +251,7 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True)
             try:
                 t_inc.append(math.acos(-raypathdir[direction] * np.dot(s[i + 1], n[i + 1])))
             except ValueError:
-                print{'t_inc ValueError |s_(i+1)| = {}, |n_(i+1)| = {} - set to previous'.format(np.linalg.norm(s[i + 1]), np.linalg.norm(n[i + 1])))
+                print('t_inc ValueError |s_(i+1)| = {}, |n_(i+1)| = {} - set to previous'.format(np.linalg.norm(s[i + 1]), np.linalg.norm(n[i + 1])))
                 t_inc.append(t_inc[i])
                 inAtmosphere = False
                 break

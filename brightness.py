@@ -19,11 +19,16 @@ class Brightness():
         self.verbosity = verbosity
         self.plot = plot
         self.log = utils.setupLogFile(log)
+        self.layerAlpha = None
         print('\n---Brightness---\n')
 
-    def layerAbsorption(self, freqs, atm, alpha, verbosity=None, plot=None):
-        self.layerAlpha = self.__layerAbsorp__(freqs, atm, alpha, verbosity=verbosity, plot=plot)
-        if plot:
+    def resetLayer(self):
+        self.layerAlpha = None
+
+    def layerAbsorption(self, freqs, atm, alpha):
+        self.freqs = freqs
+        self.layerAlpha = self.__layerAbsorp__(freqs, atm, alpha)
+        if self.plot:
             P = atm.gas[atm.config.C['P']]
             plt.figure('alpha')
             for i, f in enumerate(freqs):
@@ -39,37 +44,30 @@ class Brightness():
             # lgd=plt.legend(loc='upper left',bbox_to_anchor=(1,1))
             # lgd.set_visible(True)  # This is just to remind me...
 
-    def __layerAbsorp__(self, freqs, atm, alpha, verbosity=None, plot=None):
+    def __layerAbsorp__(self, freqs, atm, alpha):
         alphaUnits = 'invcm'
-        if verbosity is None:
-            verbosity = self.verbosity
-        if plot is None:
-            plot = self.plot
-        self.freqs = freqs
         numLayers = len(atm.gas[0])
         layerAlp = []
         P = atm.gas[atm.config.C['P']]
         T = atm.gas[atm.config.C['T']]
         utils.log(self.log, '{} layers'.format(numLayers), True)
         for layer in range(numLayers):
-            if verbosity > 2:
+            if self.verbosity > 1:
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
             sys.stdout.flush()
             layerAlp.append(alpha.getAlpha(freqs, T[layer], P[layer], atm.gas[:, layer], atm.config.C, atm.cloud[:, layer],
-                            atm.config.Cl, units=alphaUnits, verbosity=verbosity))
+                            atm.config.Cl, units=alphaUnits, verbosity=self.verbosity))
         layerAlp = np.array(layerAlp).transpose()
         print(' ')
         return layerAlp
 
-    def single(self, freqs, atm, b, alpha, orientation=None, taulimit=20.0, plot=None, verbosity=None, discAverage=False, normW4plot=True):
+    def single(self, freqs, atm, b, alpha, orientation=None, taulimit=20.0, discAverage=False, normW4plot=True):
         """This computes the brightness temperature along one ray path"""
 
-        if verbosity is None:
-            verbosity = self.verbosity
-        if plot is None:
-            plot = self.plot
+        if self.layerAlpha is None:
+            self.layerAlpha = self.layerAbsorption(freqs, atm, alpha)
         # get path lengths (ds_layer) vs layer number (num_layer) - currently frequency independent refractivity
-        self.path = ray.compute_ds(atm, b, orientation, gtype=None, verbosity=verbosity, plot=plot)
+        self.path = ray.compute_ds(atm, b, orientation, gtype=None, verbosity=self.verbosity, plot=self.plot)
         if self.path.ds is None:
             print('Off planet')
             self.Tb = []
@@ -128,8 +126,6 @@ class Brightness():
 
                 if discAverage is True:
                     Ws.append(2.0 * a1 * ss.expn(2, taus[j]))  # this is W_(i+1) for disc average
-                #    dTb = ( T1*ss.expn(2,taus[j])/scriptR(T1,freqs[j]) + T0*ss.expn(2,self.tau[ii][j])/scriptR(T0,freqs[j]) )*dtau
-                #    Tbs.append( self.Tb_lyr[i][j] + dTb )
                 else:
                     Ws.append(a1 * math.exp(-taus[j]))  # this is W_(i+1) for non disc average
                 dTb = (T1 * Ws[j] / scriptR(T1, freqs[j]) + T0 * self.W[i][j] / scriptR(T0, freqs[j])) * ds / 2.0
@@ -150,7 +146,7 @@ class Brightness():
         self.W = np.array(self.W).transpose()
         self.Tb_lyr = np.array(self.Tb_lyr).transpose()
 
-        if plot:
+        if self.plot:
             # save a local copy of
             self.P = atm.gas[atm.config.C['P']][0:len(self.W[0])]
             self.z = atm.gas[atm.config.C['Z']][0:len(self.W[0])]
