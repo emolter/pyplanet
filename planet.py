@@ -42,6 +42,8 @@ class Planet:
 
         print('Planetary modeling  (ver {})\n'.format(version))
         print("PLANET.PY_L41:  In alpha, clouds_idp need otherPar['refr'] - still?")
+        s = 'Need to fix batch mode stuff'
+        print(s * 9)
 
         if self.planet not in planetList:
             return
