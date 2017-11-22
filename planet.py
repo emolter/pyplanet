@@ -93,7 +93,7 @@ class Planet:
             freqUnit = self.freqUnit
         else:
             freqs, freqUnit = self.set_freq(freqs, freqUnit)
-            self.bright.resetLayer()
+            self.bright.resetLayers()
         self.data_return.f = freqs
 
         #  ##Set b, etc
@@ -124,10 +124,6 @@ class Planet:
             else:
                 btmp = ''
 
-        # Get the absorption in each layer once, unless you are reusing or doing Doppler
-        if not reuse and not self.config.Doppler:
-            self.bright.layerAbsorption(freqs, self.atm, self.alpha)
-
         for i, bv in enumerate(b):
             if self.verbosity > 1:
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
@@ -157,7 +153,7 @@ class Planet:
         self.data_return.header = self.header
         missed_planet = self.rNorm is None
 
-        #  ##Write output files (this needs to be compatible with TBfile  -- eventually should incorporate it in there###
+        #  ##Write output files
         outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
         if self.verbosity > 2:
             print('\nWriting {} data to {}'.format(outType, datFile))

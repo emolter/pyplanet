@@ -22,7 +22,7 @@ class Brightness():
         self.layerAlpha = None
         print('\n---Brightness---\n')
 
-    def resetLayer(self):
+    def resetLayers(self):
         self.layerAlpha = None
 
     def layerAbsorption(self, freqs, atm, alpha):
@@ -64,7 +64,7 @@ class Brightness():
         """This computes the brightness temperature along one ray path"""
 
         if self.layerAlpha is None:
-            self.layerAlpha = self.layerAbsorption(freqs, atm, alpha)
+            self.layerAbsorption(freqs, atm, alpha)
         # get path lengths (ds_layer) vs layer number (num_layer) - currently frequency independent refractivity
         self.path = ray.compute_ds(atm, b, orientation, gtype=None, verbosity=self.verbosity, plot=self.plot)
         if self.path.ds is None:
@@ -106,6 +106,8 @@ class Brightness():
             ii = self.path.layer4ds[i]
             ii1 = self.path.layer4ds[i + 1]
 
+            if self.layerAlpha is None:
+                print("is None at ", i)
             for j, f in enumerate(freqs):
                 if not alpha.config.Doppler:
                     a1 = self.layerAlpha[j][ii1]
