@@ -54,6 +54,7 @@ dynesperbar = 1.0E6              # % dyne=bar/1e6;
 coef = dynesperbar * No / R      # % See Appendix D: Using the Poyter-Pickett Catalogs
 PI = np.pi
 
+f_split = 30.0
 data = None
 
 
@@ -66,6 +67,26 @@ def readInputFiles(path, verbose=False):
 
 
 def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=True):
+    """Wrapper to handle f_split"""
+    alpha_nh3 = None
+
+    # Check lo range
+    freq = np.array(freq)
+    frq = freq[np.where([x <= f_split for x in freq])]
+    if len(frq):
+        alpha_nh3 = __alpha__(frq, T, P, X, P_dict, otherPar, units, path, verbose)
+    # Check hi range
+    frq = freq[np.where([x > f_split for x in freq])]
+    if len(frq):
+        a_hi = __alpha__(frq, T, P, X, P_dict, otherPar, units, path, verbose)
+        if alpha_nh3 is None:
+            alpha_nh3 = a_hi
+        else:
+            alpha_nh3 = np.concatenate((alpha_nh3, a_hi))
+    return alpha_nh3
+
+
+def __alpha__(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=True):
     """function alphanh3=NH3_Consistent_Model(f,T,P,H2mr,Hemr,NH3mr)
     % The data files containing the frequency, line intensity and lower state
     % energy for the ammonia transitions as given in the latest JPL spectral
@@ -108,8 +129,9 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=T
     # ###################INVERSION LINES
     # % Pressure Dependent Switch for the parameters of the inversion transitions
     # updated to new measurements from Bellotti/Steffes ppt March 11, 2016
-    print('How does the next line work?  Should I split call out to two <30 & >30?')
-    if freq <= 30.0:
+    all_over_f_split = np.all([x > f_split for x in freq])
+    all_under_f_split = np.all([x <= f_split for x in freq])
+    if all_under_f_split:
         gnu_H2 = 1.6937
         gnu_He = 0.6997
         gnu_NH3 = 0.7523
@@ -124,7 +146,7 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=T
         Z_NH3 = 1.3832
         d = -0.0139
         Con = 0.9619
-    else:
+    elif all_over_f_split:
         gnu_H2 = 1.7465
         gnu_He = 0.9779
         gnu_NH3 = 0.7298
@@ -139,6 +161,8 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=T
         Z_NH3 = 2.0 / 3.0
         d = -0.0627
         Con = 0.9862
+    else:
+        raise ValueError("Can't straddle 30 GHz in nh3_dbs.py.")
 
     gammaNH3omat = np.matrix(gammaNH3o)
     # % Individual broadening parameters
@@ -278,10 +302,8 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=T
     if units == 'dBperkm':
         alpha_opdep *= OpticaldepthstodB
     alpha_nh3_temp = np.ndarray.tolist(np.ndarray.flatten(alpha_opdep))
-    alpha_nh3 = []
-    for aaa in alpha_nh3_temp:
-        if aaa <= 0.0:
-            aaa = 1E-8
-        alpha_nh3.append(aaa)
+    alpha_nh3 = np.ndarray.flatten(alpha_opdep)
+    ltz = np.where(alpha_nh3 < 0.0)
+    alpha_nh3[ltz] = 1.0E-8
 
     return alpha_nh3

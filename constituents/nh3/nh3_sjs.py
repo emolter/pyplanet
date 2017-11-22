@@ -91,15 +91,14 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=F
     ITG = I0 * np.exp(-((1.0 / T) - (1.0 / T0)) * E * hck)
     alpha_nh3 = []
     for f in freq:
-        flfh = (fLower - fHigher) / (f - fLower)
         f2 = f**2
-        alpha = 0.0
         if f <= fLower:
             use = Spilker
         elif f >= fHigher:
             use = Joiner
         else:
             use = Interp
+            flfh = (fLower - fHigher) / (f - fLower)
             GH2[Interp] = GH2[Spilker] + (GH2[Spilker] - GH2[Joiner]) / flfh
             GHe[Interp] = GHe[Spilker] + (GHe[Spilker] - GHe[Joiner]) / flfh
             GNH3[Interp] = GNH3[Spilker] + (GNH3[Spilker] - GNH3[Joiner]) / flfh
@@ -120,8 +119,8 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=F
         shape = GHz * 2.0 * np.power(f / f0, 2.0) * num / (np.pi * den)
         alpha_nh3.append(np.sum(shape * ITG))
 
-        alpha_nh3 = coef * (P_nh3 / T0) * pow((T0 / T), n_int + 2) * np.array(alpha_nh3) * Pscale
-        if units == 'dBperkm':
-            alpha_nh3 *= 434294.5
+    alpha_nh3 = coef * (P_nh3 / T0) * pow((T0 / T), n_int + 2) * np.array(alpha_nh3) * Pscale
+    if units == 'dBperkm':
+        alpha_nh3 *= 434294.5
 
     return alpha_nh3
