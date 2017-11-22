@@ -108,6 +108,7 @@ def alpha(freq, T, P, X, P_dict, otherPar, units='dBperkm', path='./', verbose=T
     # ###################INVERSION LINES
     # % Pressure Dependent Switch for the parameters of the inversion transitions
     # updated to new measurements from Bellotti/Steffes ppt March 11, 2016
+    print('How does the next line work?  Should I split call out to two <30 & >30?')
     if freq <= 30.0:
         gnu_H2 = 1.6937
         gnu_He = 0.6997

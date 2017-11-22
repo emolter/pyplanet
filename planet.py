@@ -14,7 +14,7 @@ import data_handling
 import utils
 import fileIO
 
-version = '1.1'
+version = '2.0'
 
 
 class Planet:
