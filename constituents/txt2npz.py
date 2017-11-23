@@ -78,6 +78,11 @@ def convert_fieg(constituent):
         I0_scale = 1.0
         inputfile = 'nh3/nh3.lin'
         use_these = ['f0', 'I0', 'E', 'Gxx']
+    elif constituent == 'co':
+        useLinesUpTo = 26
+        I0_scale = 1.0
+        inputfile = 'co/co.lin'
+        use_these = ['f0', 'I0', 'E']
     outputfile = inputfile.split('.')[0] + '.npz'
     with open(inputfile, 'r') as ifp:
         for line in ifp:
