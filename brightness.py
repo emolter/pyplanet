@@ -57,7 +57,6 @@ class Brightness():
             layerAlp.append(alpha.getAlpha(freqs, T[layer], P[layer], atm.gas[:, layer], atm.config.C, atm.cloud[:, layer],
                             atm.config.Cl, units=utils.alphaUnit, verbosity=self.verbosity))
         layerAlp = np.array(layerAlp).transpose()
-        print(' ')
         return layerAlp
 
     def single(self, freqs, atm, b, alpha, orientation=None, taulimit=20.0, discAverage=False, normW4plot=True):
