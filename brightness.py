@@ -75,9 +75,6 @@ class Brightness():
             return self.Tb
 
         # set and initialize arrays
-        #self.tau = []
-        #self.W = []
-        #self.Tb_lyr = []
         taus = []
         Tbs = []
         Ws = []

@@ -8,10 +8,9 @@ class DataReturn:
         s = ''
         for i, b in enumerate(self.b):
             bstr = 'b = {}:'.format(b)
-            s += bstr + '\n  '
+            s += bstr + '\n f = '
             f = ['{:6.1f}'.format(x) for x in self.f]
-            s += ' '.join(f)
-            s += '\n  '
+            s += ' '.join(f) + '  GHz\nTb = '
             T = ['{:6.1f}'.format(x) for x in self.Tb[i]]
-            s += ' '.join(T) + '\n'
+            s += ' '.join(T) + '  K\n'
         return s
