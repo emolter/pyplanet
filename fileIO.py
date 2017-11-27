@@ -72,7 +72,7 @@ class FileIO(object):
         bs = []
         for i, bv in enumerate(b):
             s = '{:5.3f} {:5.3f}\t'.format(bv[0], bv[1])
-            bs.append(math.sqrt(bv[0]**2 + bv[1]**2))
+            bs.append(np.sqrt(bv[0]**2 + bv[1]**2))
             for j in range(len(freqs)):
                 s += ' {:7.2f}\t '.format(Tb[i][j])
             s += '\n'

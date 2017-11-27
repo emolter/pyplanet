@@ -163,7 +163,10 @@ class Brightness():
                     wplot = self.W[i]
                 label = (r'$W$: {:.1f} GHz').format(f)
                 label = (r'{:.1f} cm').format(30.0 / f)
-                plt.semilogy(wplot, self.P, label=label, linewidth=3)
+                if len(wplot) == len(self.P):
+                    plt.semilogy(wplot, self.P, label=label, linewidth=3)
+                else:
+                    print("Not plotted since wplot is length {} and P is length {}".format(len(wplot), len(self.P)))
             plt.legend()
             plt.axis(ymin=100.0 * math.ceil(self.P[-1] / 100.0), ymax=1.0E-7 * math.ceil(self.P[0] / 1E-7))
             plt.ylabel('P [bars]')
@@ -175,7 +178,10 @@ class Brightness():
                 pl = list(self.layerAlpha[i])
                 del pl[0]
                 # delete because alpha is at the layer boundaries, so there are n+1 of them
-                plt.loglog(pl, self.P, label=label)
+                if len(pl) == len(self.P):
+                    plt.loglog(pl, self.P, label=label)
+                else:
+                    print("Not plotted since wplot is length {} and P is length {}".format(len(pl), len(self.P)))
             plt.legend()
             v = list(plt.axis())
             v[2] = 100.0 * math.ceil(self.P[-1] / 100.0)
