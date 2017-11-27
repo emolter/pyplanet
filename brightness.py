@@ -53,7 +53,7 @@ class Brightness():
         for layer in range(numLayers):
             if self.verbosity > 1:
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
-            sys.stdout.flush()
+                sys.stdout.flush()
             layerAlp.append(alpha.getAlpha(freqs, T[layer], P[layer], atm.gas[:, layer], atm.config.C, atm.cloud[:, layer],
                             atm.config.Cl, units=utils.alphaUnit, verbosity=self.verbosity))
         layerAlp = np.array(layerAlp).transpose()
@@ -127,7 +127,6 @@ class Brightness():
             self.tau.append(taus)
             self.W.append(Ws)
             self.Tb_lyr.append(Tbs)
-        print('')
 
         # final spectrum
         self.Tb = []
