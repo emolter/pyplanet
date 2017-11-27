@@ -278,7 +278,7 @@ class Planet:
             b = pb
         elif len(np.shape(b)) == 2:
             bType = 'points'
-            if len(b) > 5:
+            if len(b) > 500:
                 outType = 'Profile'
             else:
                 outType = 'Spectrum'
