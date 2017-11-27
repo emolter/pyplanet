@@ -74,29 +74,26 @@ class Brightness():
                 self.Tb.append(utils.T_cmb)
             return self.Tb
 
-        # these profiles are saved
-        self.tau = []
-        self.W = []
-        self.Tb_lyr = []
-
-        # temporary arrays
+        # set and initialize arrays
+        #self.tau = []
+        #self.W = []
+        #self.Tb_lyr = []
         taus = []
         Tbs = []
         Ws = []
-
-        # initialize
         for j in range(len(freqs)):
             taus.append(0.0)
             Tbs.append(0.0)
             Ws.append(0.0)
-        self.tau.append(taus)
-        self.W.append(Ws)
-        self.Tb_lyr.append(Tbs)
+        self.tau = [taus]
+        self.W = [Ws]
+        self.Tb_lyr = [Tbs]
 
-        if alpha.config.Doppler:
-            P = atm.gas[atm.config.C['P']]
-            T = atm.gas[atm.config.C['T']]
-            print('')
+        P = atm.gas[atm.config.C['P']]
+        T = atm.gas[atm.config.C['T']]
+        z = atm.gas[atm.config.C['Z']]
+        self.P = [P[self.path.layer4ds[0]]]
+        self.z = [z[self.path.layer4ds[0]]]
 
         for i in range(len(self.path.ds) - 1):
             ds = self.path.ds[i] * utils.Units[utils.processingAtmLayerUnit] / utils.Units['cm']
@@ -105,6 +102,10 @@ class Brightness():
             Tbs = []
             ii = self.path.layer4ds[i]
             ii1 = self.path.layer4ds[i + 1]
+            T1 = T[ii1]
+            T0 = T[ii]
+            self.P.append((P[ii] + P[ii1]) / 2.0)
+            self.z.append((z[ii] + z[ii1]) / 2.0)
 
             if self.layerAlpha is None:
                 print("is None at ", i)
@@ -121,9 +122,6 @@ class Brightness():
                                         atm.config.Cl, units=utils.alphaUnit, verbosity=False)
                 dtau = (a0 + a1) * ds / 2.0
                 taus.append(self.tau[i][j] + dtau)         # this is tau_(i+1)
-                T1 = atm.gas[atm.config.C['T']][ii1]
-                T0 = atm.gas[atm.config.C['T']][ii]
-
                 if discAverage is True:
                     Ws.append(2.0 * a1 * ss.expn(2, taus[j]))  # this is W_(i+1) for disc average
                 else:
@@ -145,12 +143,10 @@ class Brightness():
         self.tau = np.array(self.tau).transpose()
         self.W = np.array(self.W).transpose()
         self.Tb_lyr = np.array(self.Tb_lyr).transpose()
+        self.P = np.array(self.P)
+        self.z = np.array(self.z)
 
         if self.plot:
-            # save a local copy of
-            self.P = atm.gas[atm.config.C['P']][0:len(self.W[0])]
-            self.z = atm.gas[atm.config.C['Z']][0:len(self.W[0])]
-
             # ####-----Weigthing functions
             plt.figure('radtran')
             plt.subplot(121)
@@ -168,7 +164,7 @@ class Brightness():
                 else:
                     print("Not plotted since wplot is length {} and P is length {}".format(len(wplot), len(self.P)))
             plt.legend()
-            plt.axis(ymin=100.0 * math.ceil(self.P[-1] / 100.0), ymax=1.0E-7 * math.ceil(self.P[0] / 1E-7))
+            plt.axis(ymin=100.0 * math.ceil(np.max(self.P) / 100.0), ymax=1.0E-7 * math.ceil(np.min(self.P) / 1E-7))
             plt.ylabel('P [bars]')
             # ####-----Alpha
             plt.figure('alpha')
@@ -184,8 +180,8 @@ class Brightness():
                     print("Not plotted since wplot is length {} and P is length {}".format(len(pl), len(self.P)))
             plt.legend()
             v = list(plt.axis())
-            v[2] = 100.0 * math.ceil(self.P[-1] / 100.0)
-            v[3] = 1.0E-7 * math.ceil(self.P[0] / 1E-7)
+            v[2] = 100.0 * math.ceil(np.max(self.P) / 100.0)
+            v[3] = 1.0E-7 * math.ceil(np.min(self.P) / 1E-7)
             plt.axis(v)
             plt.ylabel('P [bars]')
             # ####-----Brightness temperature
@@ -239,7 +235,6 @@ class Brightness():
             s += '\n'
             fp.write(s)
         s = ('%s (%d x %d)').format(filename, i + 1, j + 1)
-        return s
 
     def saveWeight(self, norm=False, filename=None, path='.'):
         if filename is None:
