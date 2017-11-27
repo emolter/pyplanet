@@ -266,20 +266,24 @@ class Planet:
                 bType = 'points'
                 outType = 'Spectrum'
                 pb.append(b)            # ...data at one location
-            else:
+            elif len(b) > 3:
                 bType = 'line'
                 outType = 'Profile'
+                outType = 'Spectrum'
                 angle = utils.d2r(b[0])
                 del b[0]
                 if len(b) == 3:
                     b = np.arange(b[0], b[1] + b[2] / 2.0, b[2])  # ...this generates the points as start,stop,step
                 for v in b:
                     pb.append([v * math.cos(angle), v * math.sin(angle)])  # ...a line at given angle (angle is first entry)
+            else:
+                raise ValueError('Invalid b request.')
             b = pb
         elif len(np.shape(b)) == 2:
             bType = 'points'
-            if len(b) > 500:
+            if len(b) > 10:
                 outType = 'Profile'
+                outType = 'Spectrum'
             else:
                 outType = 'Spectrum'
         else:
