@@ -218,8 +218,8 @@ class Planet:
             lastRow = block[0] / abs(block[1])
             if abs(block[1]) == 1:
                 lastRow = 0
-            for i in range(bsplit + lastRow):
-                ii = i + (block[0] - 1) * bsplit
+            for i in range(int(bsplit + lastRow)):
+                ii = i + int((block[0] - 1) * bsplit)
                 vrow = grid[ii]
                 for vcol in grid:
                     pb.append([vcol, vrow])

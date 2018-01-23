@@ -1,12 +1,13 @@
 import planet
-n = planet.planet('neptune')
-frq = 43.34 
+j = planet.Planet('Jupiter')
+frq = 43.34
 bstep = 0.01
-sizeofblock = 15
-#thisrun = [11]
-#thisrun = [1,2,3,4]
-thisrun = [12,13,14,15]
+number_of_blocks = 15
+chunking = 4
+block_no = int(raw_input("Block number (N of {:.0f}): ".format(int(number_of_blocks / 4) + 1)))
+thisrun = range((block_no - 1) * chunking + 1, block_no * chunking + 1)
 
 for i in thisrun:
-    n.run(freqs=frq,b=bstep,block=[i,sizeofblock])
-
+    if i > number_of_blocks:
+        break
+    j.run(freqs=frq, b=bstep, block=[i, number_of_blocks])
