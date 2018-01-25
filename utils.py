@@ -12,10 +12,11 @@ Units = {'Frequency': 1, 'Hz': 1.0, 'kHz': 1.0E3, 'MHz': 1.0E6, 'GHz': 1.0E9,
          'Pressure': 1, 'bars': 1.0, 'atm': 1.01325,
          'Time': 1, 'sec': 1.0, 'min': 60.0, 'hr': 3600.0, 'day': 86400.0, 'year': 31536000.0,
          'Acceleration': 1, 'mpersec2': 1.0, 'cmpersec2': 0.01}
-processingFreqUnit = 'GHz'  	# alpha assumes this unit
-processingAtmLayerUnit = 'km'   # alpha assumes this unit for layers
-processingPressureUnit = 'bars'
-processingAccelUnit = 'mpersec2'
+processingUnits = {'GHz': ['GHz', 'Hz', 'kHz', 'MHz'],
+                   'm': ['m', 'cm', 'AU', 'km'],
+                   'bars': ['bars', 'atm'],
+                   'sec': ['sec', 'min', 'hr', 'day', 'year'],
+                   'mpersec2': ['mpersec2', 'cmpersec2']}
 alphaUnit = 'invcm'
 speedOfLight = 2.9979E8     	# m/s
 kB = 1.3806503E-23          	# m2 kg s-2 K-1  Boltzmann's constant
@@ -25,6 +26,14 @@ T_cmb = 2.725
 rfBands = {'HF': [0.003, 0.03], 'VHF': [0.03, 0.3], 'UHF': [0.3, 1.0], 'L': [1.0, 2.0], 'S': [2.0, 4.0],
            'C': [4.0, 8.0], 'X': [8.0, 12.0], 'Ku': [12.0, 18.0], 'K': [18.0, 26.5], 'Ka': [26.5, 40.0],
            'Q': [40.0, 50.0], 'V': [50.0, 75.0], 'W': [75.0, 110.0]}
+
+
+def convert_unit(v, supplied_unit):
+    converted = v
+    for proc, units in processingUnits.iteritems():
+        if supplied_unit in units:
+            converted = v * Units[supplied_unit] / Units[proc]
+    return converted
 
 
 def r2d(a):
