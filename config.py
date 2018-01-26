@@ -111,7 +111,7 @@ class planetConfig:
             self.vwdat = [0.0, 0.0]
 
     def show(self):
-        """Displays configuration and returns string.  See __init__ and setConfig."""
+        """Returns string containing configuration"""
         s = 'Run parameters:\n'
         keys = self.toks.keys()
         keys.sort()
