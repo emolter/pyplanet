@@ -13,10 +13,10 @@ import raypath as ray
 
 class Brightness():
 
-    def __init__(self, log=None, verbosity=False, plot=False):
+    def __init__(self, log=None, verbose=False, plot=False):
         """This calculates the brightness temperature of the planets.
            It must be used with atmosphere and alpha"""
-        self.verbosity = verbosity
+        self.verbose = verbose
         self.plot = plot
         self.log = utils.setupLogFile(log)
         self.layerAlpha = None
@@ -51,11 +51,11 @@ class Brightness():
         T = atm.gas[atm.config.C['T']]
         utils.log(self.log, '{} layers'.format(numLayers), True)
         for layer in range(numLayers):
-            if self.verbosity > 1:
+            if self.verbose:
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
                 sys.stdout.flush()
             layerAlp.append(alpha.getAlpha(freqs, T[layer], P[layer], atm.gas[:, layer], atm.config.C, atm.cloud[:, layer],
-                            atm.config.Cl, units=utils.alphaUnit, verbosity=self.verbosity))
+                            atm.config.Cl, units=utils.alphaUnit))
         layerAlp = np.array(layerAlp).transpose()
         return layerAlp
 
@@ -65,7 +65,7 @@ class Brightness():
         if self.layerAlpha is None:
             self.layerAbsorption(freqs, atm, alpha)
         # get path lengths (ds_layer) vs layer number (num_layer) - currently frequency independent refractivity
-        self.path = ray.compute_ds(atm, b, orientation, gtype=None, verbosity=self.verbosity, plot=self.plot)
+        self.path = ray.compute_ds(atm, b, orientation, gtype=None, verbose=self.verbose, plot=self.plot)
         if self.path.ds is None:
             print('Off planet')
             self.Tb = []
@@ -113,9 +113,9 @@ class Brightness():
                     fshifted = [[f / self.path.doppler[i]], [f / self.path.doppler[i + 1]]]
                     print('\rdoppler corrected frequency at layer', i, end='')
                     a1 = alpha.getAlpha(fshifted[0], T[ii1], P[ii1], atm.gas[:, ii1], atm.config.C, atm.cloud[:, ii1],
-                                        atm.config.Cl, units=utils.alphaUnit, verbosity=False)
+                                        atm.config.Cl, units=utils.alphaUnit)
                     a0 = alpha.getAlpha(fshifted[1], T[ii], P[ii], atm.gas[:, ii], atm.config.C, atm.cloud[:, ii],
-                                        atm.config.Cl, units=utils.alphaUnit, verbosity=False)
+                                        atm.config.Cl, units=utils.alphaUnit)
                 dtau = (a0 + a1) * ds / 2.0
                 taus.append(self.tau[i][j] + dtau)         # this is tau_(i+1)
                 if discAverage is True:

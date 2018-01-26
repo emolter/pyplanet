@@ -117,7 +117,7 @@ def __findEdge__(atm, b, rNorm, tip, rotate, gtype, printdot=False):
     return edge, b  # same vector but in P and Q coordinate systems
 
 
-def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True):
+def compute_ds(atm, b, orientation=None, gtype=None, verbose=False, plot=True):
     """Computes the path length through the atmosphere given:
             b = impact parameter (fractional distance to outer edge at that latitude in observer's coordinates)
             orientation = position angle of the planet [0]='tip', [1]='subearth latitude' """
@@ -137,7 +137,7 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True)
 
     f = 1.0 - atm.config.Rpol / atm.config.Req
     tip, rotate = __computeAspect__(orientation, f)
-    if verbosity:
+    if verbose:
         print('intersection:  ({:.3f}, {:.3f})    '.format(b[0], b[1]), end='')
         print('aspect:  ({:%.4f},  {:.4f})'.format(tip * 180.0 / np.pi, rotate * 180.0 / np.pi))
         print('Finding atmospheric edge', end='')
@@ -151,7 +151,7 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True)
     delta_lng = utils.r2d(math.atan2(np.dot(edge, xHat), np.dot(edge, zHat)))
     geoid = shape.Shape(gtype)
     r2 = geoid.calcShape(atm, rNorm, pclat, delta_lng)
-    if verbosity:
+    if verbose:
         print(' within {:.2f} m'.format(abs(r1 - r2) * 100.0))
         geoid.printShort()
     if plot:
@@ -180,7 +180,7 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbosity=False, plot=True)
     inAtmosphere = True
     direction = 'ingress'
     while inAtmosphere:
-        if verbosity:
+        if verbose:
             print('------------------')
             print('\tstep {d}:  layer {d} {s} '.format(i, layer, direction))
             print('\ts = [{:.4f}, {:.4f}, {:.4f}],  ds = {:.4f}'.format(s[-1][_X], s[-1][_Y], s[-1][_Z], ds[-1]))
@@ -334,11 +334,11 @@ def layersTest(rmin=100.0, rmax=20000.0, nlyr=100):
     return mid
 
 
-def testPath(b=0.5, rmin=12000.0, rmax=20000.0, nlyr=50, verbosity=False, plot=True):
+def testPath(b=0.5, rmin=12000.0, rmax=20000.0, nlyr=50, verbose=False, plot=True):
     # make layers
     mid = layersTest(rmin=rmin, rmax=rmax, nlyr=nlyr)
     n = refractTest(mid)
-    ds = compute_ds(b, mid, n, verbosity=verbosity, plot=plot)
+    ds = compute_ds(b, mid, n, verbose=verbose, plot=plot)
     plt.figure('ds')
     plt.plot(mid, ds)
     return mid, ds

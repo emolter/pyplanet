@@ -21,11 +21,10 @@ def set_single_val(val, unit=None, special={'true': True, 'false': False, 'none'
 
 
 class planetConfig:
-    def __init__(self, planet, configFile, log=None, verbosity=False, printHelp=False):
+    def __init__(self, planet, configFile, log=None, printHelp=False):
         """reads in config file"""
         planet = string.capitalize(planet)
         self.planet = planet
-        self.verbosity = verbosity
         self.filename = configFile
         self.path = planet
         self.logFile = utils.setupLogFile(log)
@@ -35,9 +34,6 @@ class planetConfig:
         self.toks = config_data['toks']
         self.possibleConstituents = config_data['possibleConstituents'].split()
         self.possibleClouds = config_data['possibleClouds'].split()
-
-        if verbosity:
-            print('\n---Setting config for %s---\n'.format(planet))
 
         # Set defaults
         for tok in self.toks:

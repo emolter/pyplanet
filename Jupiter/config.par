@@ -39,7 +39,7 @@ limb     shape
 ### observations
 #--- vanilla
 distance 5.2 AU
-orientation 0.0 0.0 deg
+orientation 0.0 0.0  # deg
 #
 ### alpha
 doppler 0

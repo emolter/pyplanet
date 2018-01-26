@@ -18,21 +18,21 @@ version = '2.0'
 
 
 class Planet:
-    def __init__(self, name, config='planet', batch_mode=False, outputType='frequency', verbosity=0, plot=True):
+    def __init__(self, name, config='planet', batch_mode=False, outputType='frequency', verbose=False, plot=True):
         """This is the 'executive function class to compute overall planetary emission
            Inputs:
                 name:  'Jupiter', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
                 batch_mode:  enable batch mode processing
                 outputType:  'frequency', 'wavelength' or 'both'
-                verbosity:  integer 0=low to 2=high
+                verbose:  True/False
                 plot:  True/False"""
 
         planetList = ['Jupiter', 'Neptune', 'Uranus']
         self.planet = string.capitalize(name)
         self.batch_mode = batch_mode
         self.plot = plot
-        self.verbosity = verbosity
+        self.verbose = verbose
         self.header = {}
         self.imrow = False
         self.freqs = None
@@ -57,19 +57,19 @@ class Planet:
         #  ## Get config
         if config.lower() == 'planet':
             config = self.planet + '/config.par'
-        self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log, verbosity=verbosity)
+        self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
-        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbosity=verbosity, plot=plot)
+        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbose=verbose, plot=plot)
         self.atm.run()
         self.log.flush()
 
         #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
-        self.alpha = alpha.Alpha(config=self.config, log=self.log, verbosity=verbosity, plot=plot)
+        self.alpha = alpha.Alpha(config=self.config, log=self.log, verbose=verbose, plot=plot)
         self.log.flush()
 
         #  ## Next compute radiometric properties - initialize bright and return data class
-        self.bright = bright.Brightness(log=self.log, verbosity=verbosity, plot=plot)
+        self.bright = bright.Brightness(log=self.log, verbose=verbose, plot=plot)
         self.data_return = data_handling.DataReturn()
 
         # ## Create fileIO class
@@ -104,7 +104,7 @@ class Planet:
             print('Using {} {}'.format(freqs[0], freqUnit))
             self.freqs = list(freqs[0])
             freqs = self.freqs
-        if self.verbosity > 2:
+        if self.verbose:
             print('outType = {}'.format(outType))
 
         #  ##Start
@@ -116,7 +116,7 @@ class Planet:
         self.tip = None
         self.rotate = None
         if outType == 'Image':  # We now treat it as an image at one frequency
-            if self.verbosity > 1:
+            if self.verbose:
                 print('imgSize = {} x {}'.format(self.imSize[0], self.imSize[1]))
             imtmp = []
             if abs(block[1]) > 1:
@@ -125,7 +125,7 @@ class Planet:
                 btmp = ''
 
         for i, bv in enumerate(b):
-            if self.verbosity > 1:
+            if self.verbose:
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
             Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, discAverage=(self.bType == 'disc'))
             if self.bright.path is not None:
@@ -155,7 +155,7 @@ class Planet:
 
         #  ##Write output files
         outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
-        if self.verbosity > 2:
+        if self.verbose:
             print('\nWriting {} data to {}'.format(outType, datFile))
         self.__setHeader__(missed_planet)
         self.fIO.write(outputFile, outType, freqs, freqUnit, hit_b, self.Tb, self.header)

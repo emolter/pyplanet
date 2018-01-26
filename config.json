@@ -196,10 +196,10 @@
             "unit": "degrees",
             "help": "position angle and sub-earth latitude (planetographic)",
             "default": {
-                "Jupiter": [3.12, 0.0, 'deg'],
+                "Jupiter": [3.12, 0.0],
                 "Saturn": "",
                 "Uranus": "",
-                "Neptune": [348.8274, -28.97, 'deg']
+                "Neptune": [348.8274, -28.97]
             }
         },
         "gm": {
