@@ -13,7 +13,7 @@ Units = {'Frequency': 1, 'Hz': 1.0, 'kHz': 1.0E3, 'MHz': 1.0E6, 'GHz': 1.0E9,
          'Time': 1, 'sec': 1.0, 'min': 60.0, 'hr': 3600.0, 'day': 86400.0, 'year': 31536000.0,
          'Acceleration': 1, 'mpersec2': 1.0, 'cmpersec2': 0.01}
 processingUnits = {'GHz': ['GHz', 'Hz', 'kHz', 'MHz'],
-                   'm': ['m', 'cm', 'AU', 'km'],
+                   'km': ['m', 'cm', 'AU', 'km'],
                    'bars': ['bars', 'atm'],
                    'sec': ['sec', 'min', 'hr', 'day', 'year'],
                    'mpersec2': ['mpersec2', 'cmpersec2']}
