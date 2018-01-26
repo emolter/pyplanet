@@ -13,7 +13,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
         1 - interpolating within given points:  P,T,z are assumed to follow given adiabat and constituents are linearly interpolated
             NOTE FOR NOW IT JUST DOES THE LINEAR INTERPOLATION
         2 - extrapolating outward:  project last slope out
-        3 - interpolating inward:  uses a dry adiabat
+        3 - extrapolating inward:  uses a dry adiabat
        It has three types:
         1 - pressure grid points in file
             format: 'filename' (string)
