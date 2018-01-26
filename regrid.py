@@ -36,10 +36,6 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     if (isinstance(regridType, str) and string.lower(regridType) == 'none') or regridType is None:
         print('No regridding.  Note that there is a risk that not everything is on the same grid...\n')
         return 0
-    if isinstance(regridType, str):
-        regrid = regridType.split()
-    else:
-        regrid = [regridType]
 
     # set default Pmin/Pmax
     if Pmin is None or Pmin == 'auto' or Pmin == 0:
@@ -47,7 +43,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     if Pmax is None or Pmin == 'auto' or Pmax == -1:
         Pmax = max(atm.gas[atm.config.C['P']])
 
-    # set Pgrid or zstep(not yet)
+    # set Pgrid (pressure grid points)
     if isinstance(regridType, str):
         regrid = regridType.split()
         if len(regrid) == 1:
