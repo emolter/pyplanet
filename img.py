@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import os.path
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -10,12 +11,13 @@ import prog_path
 import utils
 import shape
 import raypath
-import TBfile
+import fileIO
 
 
 class Img:
     def __init__(self, i='?', readAndPlot=True):
-        self.TB = TBfile.TBfile('Output')
+        self.scalar = (float, int)
+        self.TB = fileIO.FileIO('frequency')
         self.kerneled = False
         self.kernel = None
         self.convolved = False
@@ -27,7 +29,7 @@ class Img:
         """Reads in image files from pyPlanet"""
 
         self.TB.read(ifilename)  # what to do about usedir?
-        print 'For now copy data over to local self...'
+        print('For now copy data over to local self...')
         self.data = self.TB.data
         self.header = self.TB.header
         self.xyextents = self.TB.xyextents
@@ -42,22 +44,22 @@ class Img:
               fixThreshhold = float sets all points above trim to padValue
               fixThreshhold = list of pairs, sets those points to padValue
               fixThreshhold = 'auto', set to 110% of non-zero average"""
-        print 'called with: ',fixThreshhold
+        print('called with: ', fixThreshhold)
         fixVal = 0
         if type(fixThreshhold) == list:
             if len(fixThreshhold) == 2:
                 fixVal = fixThreshhold
             else:
-                print 'Error in ',fixThreshhold
+                print('Error in ', fixThreshhold)
                 return None
         elif fixThreshhold[0].lower() == 'v':
-            figname = fixThreshhold+str(padValue)
+            figname = fixThreshhold + str(padValue)
             plt.figure(figname)
             for i in range(len(self.data)):
                 plt.plot(self.data[i])
             return 0
         elif fixThreshhold[0].lower() == 'd':
-            print "Derivative fix..."
+            print("Derivative fix...")
             ft = self.fixDeriv(padValue)
             self.fix(ft)
             return '...done'
@@ -67,178 +69,178 @@ class Img:
             ave = 0.0
             for i in range(dataShape[0]):
                 for j in range(dataShape[1]):
-                    if self.data[i,j]>0.0:
-                        nave+=1
-                        ave+=self.data[i,j]
-            ave = ave/nave
-            fixThreshhold = 1.1*ave
-            print 'Non-zero average = %.2f, set fixThreshhold = %.2f' % (ave,fixThreshhold)
+                    if self.data[i, j] > 0.0:
+                        nave += 1
+                        ave += self.data[i, j]
+            ave = ave / nave
+            fixThreshhold = 1.1 * ave
+            print('Non-zero average = {:.2f}, set fixThreshhold = {:.2f}'.format(ave, fixThreshhold))
             fixVal = np.where(self.data > fixThreshhold)
         else:
             fixVal = np.where(self.data > fixThreshhold)
 
         if padValue == 'auto':
-            offset = [[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1]]
+            offset = [[1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1]]
             padValue = []
             for i in range(len(fixVal[0])):
                 padVal = 0.0
                 for oval in offset:
-                    padVal+=self.data[fixVal[0][i]+oval[0], fixVal[1][i]+oval[1]]
-                padValue.append(padVal/len(offset))
+                    padVal += self.data[fixVal[0][i] + oval[0], fixVal[1][i] + oval[1]]
+                padValue.append(padVal / len(offset))
         else:
             padVal = padValue
             padValue = []
             for i in range(len(fixVal[0])):
                 padValue.append(padVal)
 
-        print 'Pad values'
+        print('Pad values')
         for i in range(len(fixVal[0])):
-            print 'point %d, %d = %.2f' % (fixVal[0][i],fixVal[1][i],padValue[i])
-            self.data[fixVal[0][i],fixVal[1][i]] = padValue[i]
+            print('point {}, {} = {:.2f}'.format(fixVal[0][i], fixVal[1][i], padValue[i]))
+            self.data[fixVal[0][i], fixVal[1][i]] = padValue[i]
         return len(fixVal[0])
 
-    def fixDeriv(self,threshhold=140.0):
+    def fixDeriv(self, threshhold=140.0):
         """Fixes points based on derivative in planet disc"""
         if threshhold == 'auto':
-            print 'You probably forgot to provide a value for fixDeriv in fix...'
+            print('You probably forgot to provide a value for fixDeriv in fix...')
             return 0
         numFix = 0
-        fixLoc = [[],[]]
+        fixLoc = [[], []]
         plt.figure('fixDeriv')
         for i in range(len(self.data)):
             inDisc = False
             for j in range(len(self.data[i])):
-                if self.data[i,j]>0.0 and not inDisc:
+                if self.data[i, j] > 0.0 and not inDisc:
                     inDisc = True
-                elif inDisc and self.data[i,j]<1E-6:
+                elif inDisc and self.data[i, j] < 1E-6:
                     inDisc = False
                 if not inDisc:
                     continue
 
-                derivForward = self.data[i,j+1] - self.data[i,j]
-                derivReverse = self.data[i,j] - self.data[i,j-1]
+                derivForward = self.data[i, j + 1] - self.data[i, j]
+                derivReverse = self.data[i, j] - self.data[i, j - 1]
                 if abs(derivForward) > threshhold:
-                    print i,j,derivForward
+                    print(i, j, derivForward)
                     plt.plot(self.data[i])
-                    plt.plot(j,self.data[i,j],'o')
-                    numFix+=1
+                    plt.plot(j, self.data[i, j], 'o')
+                    numFix += 1
                     fixLoc[0].append(i)
                     fixLoc[1].append(j)
                 elif abs(derivReverse) > threshhold:
-                    print i,j,derivReverse
+                    print(i, j, derivReverse)
                     plt.plot(self.data[i])
-                    plt.plot(j-1,self.data[i,j],'o')
-                    numFix+=1
+                    plt.plot(j - 1, self.data[i, j], 'o')
+                    numFix += 1
                     fixLoc[0].append(i)
                     fixLoc[1].append(j)
 
-        print 'Number found:  %d' % (len(fixLoc[0]))
+        print('Number found:  {}'.format(len(fixLoc[0])))
         return fixLoc
 
-    def outline(self,tip='auto',reference='ref'):
+    def outline(self, tip='auto', reference='ref'):
         """Finds approximate elliptical outline.
               - tip:  angle in the plane of the sky, 'auto' to match observation, 0 for aligned vertical
               - reference:  ['edge' or 'ref' or number_km]"""
-        outline = [[],[]]
+        outline = [[], []]
         try:  # this is all done in km
             radii = []
             for i in range(len(self.header['radii'])):
-                if type(self.header['radii'][i])==float or type(self.header['radii'][i])==int:
+                if isinstance(self.header['radii'][i], self.scalar):
                     radii.append(self.header['radii'][i])
             Req = np.max(radii)
             Rpol = np.min(radii)
             rNorm = self.header['rNorm'][0]
-            dist = self.header['distance'][0]*utils.Units[self.header['distance'][1]]/utils.Units['km']
-            checkResolution = (180.0/math.pi)*3600.0*math.atan(self.header['b'][0]*rNorm/dist)
-            lat_pg = self.header['orientation'][1]*np.pi/180.0
+            dist = self.header['distance'][0] * utils.Units[self.header['distance'][1]] / utils.Units['km']
+            checkResolution = (180.0 / math.pi) * 3600.0 * math.atan(self.header['b'][0] * rNorm / dist)
+            lat_pg = self.header['orientation'][1] * np.pi / 180.0
         except KeyError:
-            print 'Not enough header information'
+            print('Not enough header information')
             return None
 
-        print 'Reference disc is %.1f x %.1f km at %.1f km distance' % (Req,Rpol,dist)
-        print 'Image resolution is %f arcsec' % (self.resolution)
-        if type(reference)==float or type(reference)==int:
+        print('Reference disc is {:.1f} x {:.1f} km at {:.1f} km distance'.format(Req, Rpol, dist))
+        print('Image resolution is %f arcsec' % (self.resolution))
+        if isinstance(reference, self.scalar):
             a = float(reference)
-        elif reference=='edge':
+        elif reference == 'edge':
             a = self.header['rNorm'][0]
         else:  # assume reference (1-bar) level
             a = Req
-        #print 'assuming reference diameter of %.1f' % (a)
-        f = (Req-Rpol)/Req
-        lat_pc = math.atan(math.tan(lat_pg)*(1.0-f)**2)
-        b = a*(1.0 - f*math.cos( lat_pc )**2)
+        # print 'assuming reference diameter of %.1f' % (a)
+        f = (Req - Rpol) / Req
+        lat_pc = math.atan(math.tan(lat_pg) * (1.0 - f)**2)
+        b = a * (1.0 - f * math.cos(lat_pc)**2)
 
-        ### Convert to arcsec
-        a = (180.0/math.pi)*3600.0*math.atan(a/dist)
-        b = (180.0/math.pi)*3600.0*math.atan(b/dist)
-        for phi in np.arange(0.0,2.0*np.pi,np.pi/180.0):
-            outline[0].append( a*math.cos(phi) )
-            outline[1].append( b*math.sin(phi) )
-        if tip=='auto':
+        # ## Convert to arcsec
+        a = (180.0 / math.pi) * 3600.0 * math.atan(a / dist)
+        b = (180.0 / math.pi) * 3600.0 * math.atan(b / dist)
+        for phi in np.arange(0.0, 2.0 * np.pi, np.pi / 180.0):
+            outline[0].append(a * math.cos(phi))
+            outline[1].append(b * math.sin(phi))
+        if tip == 'auto':
             tip = self.header['orientation'][0]
         if tip:
-            tip = tip*np.pi/180.0
+            tip = tip * np.pi / 180.0
             for i in range(len(outline[0])):
-                r = np.array([outline[0][i],outline[1][i],0.0])
-                r = shape.rotZ(tip,r)
+                r = np.array([outline[0][i], outline[1][i], 0.0])
+                r = shape.rotZ(tip, r)
                 outline[0][i] = r[0]
                 outline[1][i] = r[1]
         return outline
 
-    def lat(self,lat_pg,tip='auto',rotate='auto',lngs=360.0,reference='ref',verbose=False):
+    def lat(self, lat_pg, tip='auto', rotate='auto', lngs=360.0, reference='ref', verbose=False):
         """Calculates the projected latitude on the disc.
                - lat_pg:  desired planetographic latitude in degrees.
                - tip:  used to tip to orientation ('auto') or another specific value (e.g. 0.0 to keep vertical)
                - rotate:  used to rotate for sub-earth point 'auto' matches the header value
                - reference:  ['edge' or 'ref' (usually 1-bar) or number_km]
                - lngs:  angle around for the latitude line - somewhat trial and error."""
-        try:   ### in km
+        try:   # ## in km
             radii = []
             for i in range(len(self.header['radii'])):
-                if type(self.header['radii'][i])==float or type(self.header['radii'][i])==int:
+                if isinstance(self.header['radii'][i], self.scalar):
                     radii.append(self.header['radii'][i])
             Req = np.max(radii)
             Rpol = np.min(radii)
             rNorm = self.header['rNorm'][0]
-            dist = self.header['distance'][0]*utils.Units[self.header['distance'][1]]/utils.Units['km']
-            checkResolution = (180.0/math.pi)*3600.0*math.atan(self.header['b'][0]*rNorm/dist)
+            dist = self.header['distance'][0] * utils.Units[self.header['distance'][1]] / utils.Units['km']
+            checkResolution = (180.0 / math.pi) * 3600.0 * math.atan(self.header['b'][0] * rNorm / dist)
         except KeyError:
-            print 'Not enough header information'
+            print('Not enough header information')
             return None
-        f = (Req-Rpol)/Req
-        lat_pg = lat_pg*math.pi/180.0
-        lat_pc = math.atan(math.tan(lat_pg)*(1.0-f)**2)
-        if type(reference)==float or type(reference)==int:
+        f = (Req - Rpol) / Req
+        lat_pg = lat_pg * math.pi / 180.0
+        lat_pc = math.atan(math.tan(lat_pg) * (1.0 - f)**2)
+        if isinstance(reference, self.scalar):
             a = float(reference)
-        elif reference=='edge':
+        elif reference == 'edge':
             a = self.header['rNorm'][0]
         else:  # assume reference (1-bar) level
             a = Req
-        #print 'assuming reference diameter of %.1f' % (a)
-        b = (1.0-f)*a
+        # print 'assuming reference diameter of %.1f' % (a)
+        b = (1.0 - f) * a
 
-        ### Convert to arcsec
-        a = (180.0/math.pi)*3600.0*math.atan(a/dist)
-        b = (180.0/math.pi)*3600.0*math.atan(b/dist)
+        # ## Convert to arcsec
+        a = (180.0 / math.pi) * 3600.0 * math.atan(a / dist)
+        b = (180.0 / math.pi) * 3600.0 * math.atan(b / dist)
 
-        ylat = b*math.sin(lat_pc)
-        alat = a*math.cos(lat_pc)
-        if tip=='auto':
+        ylat = b * math.sin(lat_pc)
+        alat = a * math.cos(lat_pc)
+        if tip == 'auto':
             tip = self.header['orientation'][0]
-        tip*=math.pi/180.0
+        tip *= math.pi / 180.0
         if rotate == 'auto':
             rotate = self.header['orientation'][1]
-        rotate = math.atan(math.tan(rotate*math.pi/180.0)*(1.0-f)**2)
+        rotate = math.atan(math.tan(rotate * math.pi / 180.0) * (1.0 - f)**2)
         if verbose:
-            print 'f, a, b = ',f, a, b
-            print 'lat_pg --> lat_pc = ',180.0*lat_pg/np.pi, 180.0*lat_pc/np.pi
-            print 'ylat, alat = ',ylat,alat
-            print 'tip, rotate = ',180.0*tip/np.pi, 180.0*rotate/np.pi
-        lat=[[],[]]
-        for th in np.arange(-lngs/2.0,lngs/2.0,lngs/200.0):
-            angle = th*np.pi/180.0
-            r = np.array([alat*math.sin(angle), ylat, alat*math.cos(angle)])
-            r = raypath.__rotate2obs__(rotate,tip,r)
+            print('f, a, b = ', f, a, b)
+            print('lat_pg --> lat_pc = ', 180.0 * lat_pg / np.pi, 180.0 * lat_pc / np.pi)
+            print('ylat, alat = ', ylat, alat)
+            print('tip, rotate = ', 180.0 * tip / np.pi, 180.0 * rotate / np.pi)
+        lat = [[], []]
+        for th in np.arange(-lngs / 2.0, lngs / 2.0, lngs / 200.0):
+            angle = th * np.pi / 180.0
+            r = np.array([alat * math.sin(angle), ylat, alat * math.cos(angle)])
+            r = raypath.__rotate2obs__(rotate, tip, r)
             lat[0].append(r[0])
             lat[1].append(r[1])
         return lat
@@ -264,8 +266,8 @@ class Img:
             image = self.data
             header = self.header
         if filename == None:
-            print 'Saving image composed of file headers:'
-            print self.header
+            print('Saving image composed of file headers:')
+            print(self.header)
             filename = raw_input('output filename: ')
         fp = open(filename,'w')
         for hkey in header.keys():
@@ -273,7 +275,7 @@ class Img:
             for v in header[hkey]:
                 s+=str(v)+'  '
             fp.write(s+'\n')
-            print s
+            print(s)
         for row in image:
             s = ''
             for col in row:
@@ -287,10 +289,10 @@ class Img:
         p = planet.planet('functions')
         bdata = p.bRequest(self.header['b'][0],block=[1,1])
         if len(bdata) != np.size(self.data):
-            print 'b-values (%d) do not number the same as the image size (%d)' % (len(bdata),np.size(self.data))
+            print('b-values (%d) do not number the same as the image size (%d)' % (len(bdata),np.size(self.data)))
             return 0
         if len(bmod)==3:    # assume center and radius
-            print 'Circle edit'
+            print('Circle edit')
             pixel_modlist = []
             for i in range(len(bdata)):
                 if math.sqrt( bdata[i][0]**2 + bdata[i][1]**2 ) > 0.95:
@@ -301,9 +303,9 @@ class Img:
                     pixel_modlist.append([row,col])
                     nedit+=1
         elif len(bmod)==4:  # assume square
-            print 'Square'
+            print('Square')
         else:               # assume list
-            print 'list'
+            print('list')
             if type(Tmod) == float:
                 tmp = Tmod
                 Tmod = []
@@ -322,18 +324,18 @@ class Img:
         import atmosphere
         pyPlanetPath = os.getenv('PYPLANETPATH')
         if pyPlanetPath == None:
-            print 'No PYPLANETPATH environment variable'
+            print('No PYPLANETPATH environment variable')
             pyPlanetPath = './'
         atm = atmosphere.atmosphere('neptune',pyPlanetPath)
         atm.run()
         p = planet.planet('functions')
         bdata = p.bRequest(self.header['b'][0],block=[1,1])
         if len(bdata) != np.size(self.data):
-            print 'b-values (%d) do not number the same as the image size (%d)' % (len(bdata),np.size(self.data))
+            print('b-values (%d) do not number the same as the image size (%d)' % (len(bdata),np.size(self.data)))
             return 0
         radii = []
         for i in range(len(self.header['radii'])):
-            if type(self.header['radii'][i])==float or type(self.header['radii'][i])==int:
+            if isinstance(self.header['radii'][i], self.scalar):
                 radii.append(self.header['radii'][i])
         rNorm = self.header['rNorm'][0]
         Req = np.max(radii)
@@ -349,10 +351,10 @@ class Img:
         lat_pcmod = math.atan(math.tan(lat_pg)*(1.0-f)**2)
         pixel_modlist = []
         nedit = 0
-        if type(Tmod)==float or type(Tmod)==int:
+        if isinstance(Tmod, self.scalar):
             Tmod = list(Tmod)
         if len(Tmod) != len(limb):
-            print 'limb is incorrectly specified'
+            print('limb is incorrectly specified')
             return 0
         for i in range(len(bdata)):
             edge, bmod = raypath.__findEdge__(atm,bdata[i],rNorm,tip,rotate,gtype,printdot=False)
@@ -404,7 +406,7 @@ class Img:
         alpha = 4.0*math.log(2)/fwhm**2.0
         self.fwhm = fwhm
         res = self.resolution
-        print 'Generating '+ktype+' kernel with fwhm = ',fwhm
+        print('Generating '+ktype+' kernel with fwhm = ',fwhm)
         if type(res) == str:
             self.resolution = float(raw_input('input image resolution in arcsec:  '))
         center = [len(self.kernel)/2, len(self.kernel[0])/2]
@@ -413,7 +415,7 @@ class Img:
                 d = math.sqrt((float(i)-center[0])**2.0 + (float(j)-center[1])**2.0)*res
                 self.kernel[j,i] = math.exp(-alpha*(d**2))
         self.header['kernel'] = [fwhm,'arcsec',ktype]
-        print 'kernel at self.kernel and self.kernelHeader'
+        print('kernel at self.kernel and self.kernelHeader')
         self.kerneled = True
 
         return alpha
@@ -427,21 +429,21 @@ class Img:
                     nave+=1
                     Tave+=T
         Tave = Tave/nave
-        print 'Disc average = %f' % (Tave)
+        print('Disc average = %f' % (Tave))
         return Tave
 
 
     def convolve(self, fwhm=None):
         """Convolves self.data with self.kernel (from self.generateKernel).  Output to self.convolvedImage"""
         if not self.kerneled and fwhm==None:
-            print 'Error:  no kernel'
+            print('Error:  no kernel')
             return None
         if fwhm:
             self.generateKernel(fwhm,ktype='gaussian')
         self.convolvedHeader = self.header
         self.header['note'] = ['convolved']
         self.convolvedImage = convolvend(self.data,self.kernel,normalize_kernel=True)
-        print 'convolved image at self.convolvedImage and self.convolvedHeader'
+        print('convolved image at self.convolvedImage and self.convolvedHeader')
         self.convolved = True
 
     def rotate_image(self,image,rotate=None):
@@ -449,7 +451,7 @@ class Img:
                - rotate is angle in degrees"""
         if rotate == None:
             rotate = self.header['aspect'][0]
-        print 'Rotate:  ',rotate
+        print('Rotate:  ',rotate)
         img_max = np.max(image)
         if rotate != 0.0:
             image = misc.imrotate(image,rotate)
@@ -469,7 +471,7 @@ class Img:
               bestFit is True/False or a list.  len=2 computes at one offset, len=4 computes at those ranges"""
 
         if self.convolved==False:
-            print 'Image not convolved'
+            print('Image not convolved')
             return None
         if region == 'auto':  # for now
             if self.header['band'] == 'C':
@@ -486,7 +488,7 @@ class Img:
         if not self.reducedImagesMade:
             self.reducedImagesMade = resize
             if (res1 < res2 and resize=='up') or (res2 < res1 and resize=='down'):
-                print 'Resizing '+resize+' to input image over region '+str(region)
+                print('Resizing '+resize+' to input image over region '+str(region))
                 v2x = np.where( (self.x > region[0]) & (self.x < region[1]) )
                 v2y = np.where( (self.y > region[2]) & (self.y < region[3]) )
                 x2reduced = x[v2x]
@@ -506,7 +508,7 @@ class Img:
                 self.ydiff = y1reduced
                 del image2reduced
             elif (res1 < res2 and resize=='down') or (res2 < res1 and resize=='up'):
-                print 'Resizing '+resize+' to convolvedImage over region '+str(region)
+                print('Resizing '+resize+' to convolvedImage over region '+str(region))
                 v1x = np.where( (x > region[0]) & (x < region[1]) )
                 v1y = np.where( (y > region[2]) & (y < region[3]) )
                 x1reduced = x[v1x]
@@ -526,10 +528,10 @@ class Img:
                 self.ydiff = y2reduced
                 del image1reduced
             else:
-                print 'screwed up somewhere'
+                print('screwed up somewhere')
                 return None
-            print '\tshape(image):  %s -> %s' % (ibef,iaft)
-            print '\tshape(convolved):  %s -> %s' % (cbef,caft)
+            print('\tshape(image):  %s -> %s' % (ibef,iaft))
+            print('\tshape(convolved):  %s -> %s' % (cbef,caft))
             if plot:
                 plt.figure(101)
                 plt.subplot(221)
@@ -548,15 +550,15 @@ class Img:
                     col_offset_list = range(bestFit[0],bestFit[1]+1)
                     row_offset_list = range(bestFit[2],bestFit[3]+1)
                 else:
-                    print 'Error in bestFit list'
+                    print('Error in bestFit list')
                     col_offset_list = [0]
                     row_offset_list = [0]
             else:
                 col_offset_list = range(-10,11)
                 row_offset_list = range(-10,11)
-            print 'Finding best residual over range ',
-            print '('+str(col_offset_list[0])+','+str(row_offset_list[0])+') - ('+str(col_offset_list[-1])+','+str(row_offset_list[-1])+')'
-            print 'with mask '+str(mask)
+            print('Finding best residual over range ',)
+            print('('+str(col_offset_list[0])+','+str(row_offset_list[0])+') - ('+str(col_offset_list[-1])+','+str(row_offset_list[-1])+')')
+            print('with mask '+str(mask))
             vMasky = np.where( (self.xdiff > mask[0]) & (self.xdiff < mask[1]) )
             vMaskx = np.where( (self.ydiff > mask[2]) & (self.ydiff < mask[3]) )
             if showMask and not maskShown:
@@ -568,7 +570,7 @@ class Img:
             col_best = 0
             row_best = 0
             for row_offset in row_offset_list:
-                print 'Trial:  ',row_offset
+                print('Trial:  ',row_offset)
                 for col_offset in col_offset_list:
                     sqerr = 0.0
                     for i in range( len(self.image1reduced) ):
@@ -586,7 +588,7 @@ class Img:
                         row_best = row_offset
                         col_best = col_offset
             best = math.sqrt(best)
-            print 'Offset:  %d, %d with residual %f' % (col_best,row_best, best)
+            print('Offset:  %d, %d with residual %f' % (col_best,row_best, best))
             self.residual = best
         else:
             row_best = 0
@@ -629,7 +631,7 @@ class Img:
             for i in cols:
                 diff = self.diff(x,y,image,bestFit=[i,j])
                 plt.subplot(len(rows),len(cols),pc)
-                print '%d of %d' % (pc,npc)
+                print('%d of %d' % (pc,npc))
                 pc+=1
                 self.show(imtype='d')
                 self.drawLat()
@@ -656,7 +658,7 @@ def diffOLD(image1,res1,image2,res2,resize='up',bestFit=True,plot=False):
 
     img_max =  [np.max(image1), np.max(image2)]
     if abs(res1 - res2)/(res1 + res2) < 0.001:
-        print 'resolutions nearly equal - no resize'
+        print('resolutions nearly equal - no resize')
     else:
         factor = res1/res2
         if factor < 1.0 and resize=='up':
@@ -672,9 +674,9 @@ def diffOLD(image1,res1,image2,res2,resize='up',bestFit=True,plot=False):
             maxOut = float(np.max(image1))
             image1 = img_max[0]*(image1/maxOut)
         else:
-            print 'screwed up somewhere'
+            print('screwed up somewhere')
             return None
-    print 'factor = ',factor
+    print('factor = ',factor)
     offset = [-2,-1,0,1,2]
     extra = [len(image2)%2, len(image2[0])%2]
     center1 = [len(image1)/2,len(image1[0])/2]
@@ -697,7 +699,7 @@ def diffOLD(image1,res1,image2,res2,resize='up',bestFit=True,plot=False):
                     best = sqerr
                     i_best = i_offset
                     j_best = j_offset
-        print 'Offset:  %d, %d with residual %f' % (i_best,j_best, math.sqrt(best))
+        print('Offset:  %d, %d with residual %f' % (i_best,j_best, math.sqrt(best)))
     else:
         i_best = 0
         j_best = 0
