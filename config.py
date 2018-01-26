@@ -77,7 +77,7 @@ class planetConfig:
             typetok = type(self.toks[tok]['default'][self.planet])
             if typetok in (str, unicode, float, int):
                 unit = 'none'
-                if len(data) == 2 and type(val) == float:
+                if len(data) == 2:
                     unit = data[1]
                 val = set_single_val(data[0], unit)
             elif typetok == list:

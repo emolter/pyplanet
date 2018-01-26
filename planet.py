@@ -335,12 +335,12 @@ class Planet:
             else:
                 raise ValueError('Invalid format for frequency request')
         for i in range(len(freqs)):
-            freqs[i] *= utils.Units[freqUnit] / utils.Units[utils.processingFreqUnit]
+            freqs[i] = utils.convert_unit(freqs[i], freqUnit)
         if len(freqs) > 1:
-            s = '{} in {} frequency steps ({} - {} {})'.format(self.planet, len(freqs), freqs[0], freqs[-1], utils.processingFreqUnit)
+            s = '{} in {} frequency steps ({} - {} {})'.format(self.planet, len(freqs), freqs[0], freqs[-1], utils.proc_unit(freqUnit))
         else:
-            s = '{} at {} {}'.format(self.planet, freqs[0], utils.processingFreqUnit)
+            s = '{} at {} {}'.format(self.planet, freqs[0], utils.proc_unit(freqUnit))
         utils.log(self.log, s, True)
         self.freqs = freqs
-        self.freqUnit = utils.processingFreqUnit
-        return freqs, utils.processingFreqUnit
+        self.freqUnit = utils.proc_unit(freqUnit)
+        return freqs, utils.proc_unit(freqUnit)

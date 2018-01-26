@@ -33,42 +33,41 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     # set regridType/regrid
     if regridType is None:
         regridType = atm.config.regridType
-    if string.lower(regridType) == 'none' or regridType is None:
+    if (isinstance(regridType, str) and string.lower(regridType) == 'none') or regridType is None:
         print('No regridding.  Note that there is a risk that not everything is on the same grid...\n')
         return 0
-    if string.lower(regridType) == 'auto' or string.lower(regridType) == 'default':
-        regridType = '1000'
-    regrid = regridType.split()
+    if isinstance(regridType, str):
+        regrid = regridType.split()
+    else:
+        regrid = [regridType]
 
     # set default Pmin/Pmax
-    if Pmin is None or Pmin == 'auto':
+    if Pmin is None or Pmin == 'auto' or Pmin == 0:
         Pmin = min(atm.gas[atm.config.C['P']])
-    if Pmax is None or Pmin == 'auto':
+    if Pmax is None or Pmin == 'auto' or Pmax == -1:
         Pmax = max(atm.gas[atm.config.C['P']])
 
     # set Pgrid or zstep(not yet)
-    if len(regrid) == 1:
-        try:
-            regrid_numsteps = int(regrid[0])
-            regridType = 3
-            Pgrid = np.logspace(np.log10(Pmin), np.log10(Pmax), regrid_numsteps)
-            if verbose:
-                print('Regridding on {} steps'.format(regrid_numsteps))
-        except ValueError:
-            regrid_file = os.path.join(atm.config.path, regrid[0])
-            regridType = 1
-            Pgrid = _procF_(regrid_file)
-            Pmin = min(Pgrid)
-            Pmax = max(Pgrid)
-    else:
-        regrid_stepsize = float(regrid[0])
-        regrid_unit = regrid[1]
-        regridType = 2
-        Pgrid = None
-    if Pgrid is None:
-        print('not implemented yet - no regrid')
-        return 0
-
+    if isinstance(regridType, str):
+        regrid = regridType.split()
+        if len(regrid) == 1:
+            try:
+                regridType = int(regrid[0])
+            except ValueError:
+                regrid_file = os.path.join(atm.config.path, regrid[0])
+                Pgrid = _procF_(regrid_file)
+        elif len(regrid) == 2:
+            regrid_stepsize = float(regrid[0])
+            regrid_unit = regrid[1]
+            print("This is meant to be step and unit, but not implemented.")
+            return 0
+    if isinstance(regridType, int):
+        regrid_numsteps = regridType
+        Pgrid = np.logspace(np.log10(Pmin), np.log10(Pmax), regrid_numsteps)
+        if verbose:
+            print('Regridding on {} steps'.format(regrid_numsteps))
+    Pmin = min(Pgrid)
+    Pmax = max(Pgrid)
     # ## Copy over for new array size
     nAtm = len(Pgrid)
     nGas = atm.gas.shape[0]

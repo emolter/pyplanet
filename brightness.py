@@ -92,7 +92,7 @@ class Brightness():
         self.z = [z[self.path.layer4ds[0]]]
 
         for i in range(len(self.path.ds) - 1):
-            ds = self.path.ds[i] * utils.Units[utils.processingAtmLayerUnit] / utils.Units['cm']
+            ds = self.path.ds[i] * utils.Units[utils.atmLayerUnit] / utils.Units['cm']
             taus = []
             Ws = []
             Tbs = []

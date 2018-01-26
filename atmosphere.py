@@ -35,7 +35,7 @@ class Atmosphere:
         self.logFile = utils.setupLogFile(log)
         self.batch = batch
 
-        print('\n---Atmosphere of %s---'.format(planet))
+        print('\n---Atmosphere of {}---'.format(planet))
         if type(config) == str:
             config = pcfg.planetConfig(self.planet, configFile=config, log=log, verbosity=verbosity)
         self.config = config
