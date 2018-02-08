@@ -5,7 +5,6 @@
 ### gas data
 #gasfile jupiter.paulSolar
 gasfile jupiter.paulvla72x
-gasfilehdr 1
 #gasfile jupiter.paulvla2d
 constituents Z T P H2 HE CH4 NH3 H2O H2S SOLN OTHER PH3 CO CO13 HCN DZ
 #gasfile batch
@@ -15,7 +14,6 @@ constituents Z T P H2 HE CH4 NH3 H2O H2S SOLN OTHER PH3 CO CO13 HCN DZ
 #cloudfile jupiter.paulclSolar
 cloudfile jupiter.paulclvla72x
 #cloudfile jupiter.paulclvla2d
-cloudfilehdr
 clouds Z T P SOLN H2O NH4SH NH3 H2S CH4 AR PH3 DZ
 #cloudfile batch
 #cloudfile modatm1.dat
