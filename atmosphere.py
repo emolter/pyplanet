@@ -229,7 +229,7 @@ class Atmosphere:
         plt.xlabel('Property')
         plt.legend()
 
-    def readGas(self, gasFile=None, numHeaderLines=None, Cdict=None, verbose=False):
+    def readGas(self, gasFile=None, Cdict=None, verbose=False):
         """Reads gas profile file as self.gas"""
 
         if gasFile is None:
@@ -242,10 +242,8 @@ class Atmosphere:
         else:
             self.batch = False
         gasFile = os.path.join(self.config.path, gasFile)
-        if numHeaderLines is None:
-            numHeaderLines = self.config.gasFileHdr
 
-        print('Reading ' + gasFile + '  (Header:  ' + str(numHeaderLines) + ')')
+        print('Reading constituents from {}'.format(gasFile))
         self.gas = []
         print('\tUsing atmsopheric component:  ', end='')
         for k in Cdict:
@@ -257,41 +255,25 @@ class Atmosphere:
         except IOError:
             print(gasFile + ' was not found - returning no gas profile\n\n')
             raise IOError
-        i = 0
-        lineno = 0
-        pastHeader = False
         print(' ')
         for line in fp:
-            lineno += 1
-            data = line.split()
-            skip_row = line[0] == '!' or len(data) < 4 or lineno <= numHeaderLines
-            # ##### put in something to eliminate the need for numHeaderLines..........
-            if skip_row:
-                if verbose:
-                    print('\tHEADER: ' + line, end='')
+            if line[0] in utils.commentChars or len(line) < 4:
                 continue
-            pastHeader = True
-            if len(line) < 3:
-                if pastHeader:
-                    break
-                else:
-                    continue
-            if i == 0:
-                print('\tCompiling ' + str(self.nConstituent) + ' components (data-file: ' + str(len(data)) + ')')
+            data = line.split()
+            try:
+                cval = [float(x) for x in data]
+            except ValueError:
+                continue
+            if len(cval) > self.nConstituent:
+                print("{} has wrong number of constituents".format(line))
+                continue
             for n in range(self.nConstituent):  # Initialize all of the constituents to 0.0
-                self.gas[n].append(0.0)
-            columns = Cdict.values()
-            columns.sort()
-            for n, v in enumerate(columns):  # ...now read in data
-                if v < len(data):
-                    self.gas[n][i] = float(data[v])
+                if n < len(cval):
+                    self.gas[n].append(cval[n])
                 else:
-                    self.gas[n][i] = 0.0
-            if (self.nConstituent - n) != 1:
-                print('line ' + str(i + 1) + ' has incorrect number of components')
-                print('[' + line + ']')
-            i += 1
-        self.nGas = i
+                    self.gas[n].append(0.0)
+        self.nGas = len(self.gas[0])
+
         # ##Redo the constituent dictionary for the self.gas index positions
         nid, sk = utils.invertDictionary(Cdict)
         for i, k in enumerate(sk):
@@ -333,7 +315,7 @@ class Atmosphere:
             fp.write(s)
         fp.close()
 
-    def readCloud(self, cloudFile=None, numHeaderLines=None, Cldict=None, verbose=False):
+    def readCloud(self, cloudFile=None, Cldict=None, verbose=False):
         """Reads in cloud data if we have it..."""
 
         if cloudFile is None:
@@ -346,54 +328,37 @@ class Atmosphere:
         else:
             self.batch = False
         cloudFile = os.path.join(self.config.path, cloudFile)
-        if numHeaderLines is None:
-            numHeaderLines = self.config.cloudFileHdr
 
-        print('Reading ', cloudFile, '  (Header:  ', str(numHeaderLines), ')')
+        print('Reading clouds from {}'.format(cloudFile))
         self.cloud = []
-        print('\tUsing cloud component:  ', end='')
+        print('\tUsing cloud components:  ', end='')
         for k in Cldict:
             print(k, '  ', end='')
             self.cloud.append([])
-        self.nParticulate = len(Cldict)
+        self.nParticulate = len(Cldict.keys())
         try:
             fp = open(cloudFile, "r")
         except IOError:
             print(cloudFile, ' was not found - returning no clouds\n\n')
             raise IOError
-        i = 0
-        lineno = 0
-        pastHeader = False
         print(' ')
         for line in fp:
-            lineno += 1
-            if line[0] == '!' or lineno <= numHeaderLines:
-                if verbose:
-                    print('\tHEADER: ' + line, end='')
+            if line[0] in utils.commentChars or len(line) < 4:
                 continue
-            pastHeader = True
-            if len(line) < 3:
-                if pastHeader:
-                    break
-                else:
-                    continue
             data = line.split()
-            if i == 0:
-                print('\tReading ', str(self.nParticulate), ' cloud particles (data-file: ', str(len(data)), ')')
+            try:
+                cval = [float(x) for x in data]
+            except ValueError:
+                continue
+            if len(cval) > self.nParticulate:
+                print("{} has wrong number of particulates".format(line))
+                continue
             for n in range(self.nParticulate):  # Initialize all of the particulates to 0.0
-                self.cloud[n].append(0.0)
-            columns = Cldict.values()
-            columns.sort()
-            for n, v in enumerate(columns):  # ...now read in data
-                if v < len(data):
-                    self.cloud[n][i] = float(data[v])
+                if n < len(cval):
+                    self.cloud[n].append(cval[n])
                 else:
-                    self.cloud[n][i] = 0.0
-            if (self.nParticulate - n) != 1:
-                print('line ', str(i + 1), ' has incorrect number of particulates')
-                print('[', line, ']')
-            i += 1
-        self.nCloud = i
+                    self.cloud[n].append(0.0)
+        self.nCloud = len(self.cloud[0])
         # ##Redo the particulate dictionary for the self.cloud index positions
         nid, sk = utils.invertDictionary(Cldict)
         for i, k in enumerate(sk):
