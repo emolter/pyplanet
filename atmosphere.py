@@ -265,7 +265,7 @@ class Atmosphere:
             except ValueError:
                 continue
             if len(cval) > self.nConstituent:
-                print("{} has wrong number of constituents".format(line))
+                print("{} has too many constituents".format(line))
                 continue
             for n in range(self.nConstituent):  # Initialize all of the constituents to 0.0
                 if n < len(cval):
@@ -351,7 +351,7 @@ class Atmosphere:
             except ValueError:
                 continue
             if len(cval) > self.nParticulate:
-                print("{} has wrong number of particulates".format(line))
+                print("{} has too many particulates".format(line))
                 continue
             for n in range(self.nParticulate):  # Initialize all of the particulates to 0.0
                 if n < len(cval):
