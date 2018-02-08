@@ -75,7 +75,12 @@ class planetConfig:
                 unit = 'none'
                 if len(data) == 2:
                     unit = data[1]
-                val = set_single_val(data[0], unit)
+                if len(data):
+                    val = set_single_val(data[0], unit)
+                else:
+                    print("{} didn't have an associated argument in config file.".format(tok))
+                    print("Using default:  {}".format(self.toks[tok]['default'][self.planet]))
+                    continue
             elif typetok == list:
                 val = [set_single_val(x) for x in data]
             elif typetok == dict:
