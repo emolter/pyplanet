@@ -9,8 +9,10 @@
             "default": {
                 "Jupiter": {"Z": 0, "T": 1, "P": 2, "H2": 3, "HE": 4, "CH4": 5, "NH3": 6, "H2O": 7, "H2S": 8, "SOLN": 9, "OTHER": 10,
                             "PH3": 11, "CO": 12, "CO13": 13, "HCN": 14, "DZ": 15},
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": {"Z": 0, "T": 1, "P": 2, "H2": 3, "HE": 4, "CH4": 5, "NH3": 6, "H2O": 7, "H2S": 8, "SOLN": 9, "OTHER": 10,
+                            "PH3": 11, "CO": 12, "CO13": 13, "HCN": 14, "DZ": 15},
+                "Uranus": {"Z": 0, "T": 1, "P": 2, "H2": 3, "HE": 4, "CH4": 5, "NH3": 6, "H2O": 7, "H2S": 8, "SOLN": 9, "OTHER": 10,
+                            "PH3": 11, "CO": 12, "CO13": 13, "HCN": 14, "DZ": 15},
                 "Neptune": {"Z": 0, "T": 1, "P": 2, "H2": 3, "HE": 4, "CH4": 5, "NH3": 6, "H2O": 7, "H2S": 8, "SOLN": 9, "OTHER": 10,
                             "PH3": 11, "CO": 12, "CO13": 13, "HCN": 14, "DZ": 15}
             }
@@ -21,8 +23,8 @@
             "help": "atmospheric constituent file - column order set by C",
             "default": {
                 "Jupiter": "jupiter.paulSolar",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "saturn.paulSolar",
+                "Uranus": "uranus.paul10xsolar_wet.dat",
                 "Neptune": "neptune.paulCO_cloud21_fletcher_best_dry"
             }
         },
@@ -32,8 +34,8 @@
             "help": "NO LONGER USED BUT KEPT FOR BACKWARD COMPATIBILITY number of header lines (to ignore) in gasFile",
             "default": {
                 "Jupiter": 0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0,
+                "Uranus": 0,
                 "Neptune": 0
             }
         },
@@ -43,8 +45,8 @@
             "help": "read vs compute -- normally read (currently can't compute)",
             "default": {
                 "Jupiter": "read",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "read",
+                "Uranus": "read",
                 "Neptune": "read"
             }
         },
@@ -54,8 +56,8 @@
             "help": "This 'Cl'oud dictionary has the cloud parameters.  Needs to correspond to datafile if not computing, but can have extra at end",
             "default": {
                 "Jupiter": {"Z": 0, "T": 1, "P": 2, "SOLN": 3, "H2O": 4, "NH4SH": 5, "NH3": 6, "H2S": 7, "CH4": 8, "AR": 9, "PH3": 10, "DZ": 11},
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": {"Z": 0, "T": 1, "P": 2, "SOLN": 3, "H2O": 4, "NH4SH": 5, "NH3": 6, "H2S": 7, "CH4": 8, "AR": 9, "PH3": 10, "DZ": 11},
+                "Uranus": {"Z": 0, "T": 1, "P": 2, "SOLN": 3, "H2O": 4, "NH4SH": 5, "NH3": 6, "H2S": 7, "CH4": 8, "AR": 9, "PH3": 10, "DZ": 11},
                 "Neptune": {"Z": 0, "T": 1, "P": 2, "SOLN": 3, "H2O": 4, "NH4SH": 5, "NH3": 6, "H2S": 7, "CH4": 8, "AR": 9, "PH3": 10, "DZ": 11}
             }
         },
@@ -65,8 +67,8 @@
             "help": "atmospheric cloud file - column order set by Cl",
             "default": {
                 "Jupiter": "jupiter.paulclSolar",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "saturn.paulclSolar",
+                "Uranus": "uranus.cloud10xsolar_wet.dat",
                 "Neptune": "nepcloud_CO.cloud21_fletcher_best_dry"
             }
         },
@@ -76,8 +78,8 @@
             "help": "NO LONGER USED BUT KEPT FOR BACKWARD COMPATIBILITY number of header lines (to ignore) in cloudFile",
             "default": {
                 "Jupiter": 0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0,
+                "Uranus": 0,
                 "Neptune": 0
             }
         },
@@ -87,8 +89,8 @@
             "help": "read vs compute -- normally read (currently can't compute)",
             "default": {
                 "Jupiter": "read",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "read",
+                "Uranus": "read",
                 "Neptune": "read"
             }
         },
@@ -98,8 +100,8 @@
             "help": "This dictionary has other parameters.",
             "default": {
                 "Jupiter": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9},
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9},
+                "Uranus": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9},
                 "Neptune": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9}
             }
         },
@@ -109,8 +111,8 @@
             "help": "some other file",
             "default": {
                 "Jupiter": "None",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "None",
+                "Uranus": "None",
                 "Neptune": "None"
             }
         },
@@ -120,8 +122,8 @@
             "help": "read vs compute -- normally compute (currently can't read)",
             "default": {
                 "Jupiter": "compute",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "compute",
+                "Uranus": "compute",
                 "Neptune": "compute"
             }
         },
@@ -142,8 +144,8 @@
             "help": "polar radius at p_ref",
             "default": {
                 "Jupiter": 66854.0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0.0,
+                "Uranus": 25559.0,
                 "Neptune": 24342.0
             }
         },
@@ -153,8 +155,8 @@
             "help": "the pressure where the radii are specified (Req/Rpol)",
             "default": {
                 "Jupiter": 1.0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 1.0,
+                "Uranus": 1.0,
                 "Neptune": 1.0
             }
         },
@@ -164,8 +166,8 @@
             "help": "pmin that is used in the regrid; 0 uses file min",
             "default": {
                 "Jupiter": 0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0,
+                "Uranus": 0,
                 "Neptune": 0
             }
         },
@@ -175,8 +177,8 @@
             "help": "pmax that is used in the regrid; -1 uses file max",
             "default": {
                 "Jupiter": -1,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": -1,
+                "Uranus": -1,
                 "Neptune": -1
             }
         },
@@ -186,8 +188,8 @@
             "help": "distance to the planet",
             "default": {
                 "Jupiter": 5.2,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0,
+                "Uranus": 19.2,
                 "Neptune": 29.7
             }
         },
@@ -197,8 +199,8 @@
             "help": "position angle and sub-earth latitude (planetographic)",
             "default": {
                 "Jupiter": [3.12, 0.0],
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": [0.0, 0.0],
+                "Uranus": [0.0, 0.0],
                 "Neptune": [348.8274, -28.97]
             }
         },
@@ -208,8 +210,8 @@
             "help": "GM at radius RJ",
             "default": {
                 "Jupiter": 12.6686538e7,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0.0,
+                "Uranus": 5.794e6,
                 "Neptune": 0.6835096e7
             }
         },
@@ -219,8 +221,8 @@
             "help": "file with zonal winds",
             "default": {
                 "Jupiter": "Jupiter/zonalJupiter.dat",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "Saturn/zonalSaturn.dat",
+                "Uranus": "Uranus/zonalUranus.dat",
                 "Neptune": "Neptune/zonalNeptune.dat"
             }
         },
@@ -230,8 +232,8 @@
             "help": "instructions or file to regrid data (see regrid.py) (string/int)",
             "default": {
                 "Jupiter": "grid.dat",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "grid.dat",
+                "Uranus": "grid.dat",
                 "Neptune": "grid.dat"
             }
         },
@@ -241,8 +243,8 @@
             "help": "limb type - used in compute_ds to test limb darkening [shape/sec]",
             "default": {
                 "Jupiter": "shape",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "shape",
+                "Uranus": "shape",
                 "Neptune": "shape"
             }
         },
@@ -252,8 +254,8 @@
             "help": "hydrogen state [e or n]",
             "default": {
                 "Jupiter": "e",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "e",
+                "Uranus": "e",
                 "Neptune": "e"
             }
         },
@@ -263,8 +265,8 @@
             "help": "use Doppler or not",
             "default": {
                 "Jupiter": "False",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "False",
+                "Uranus": "False",
                 "Neptune": "False"
             }
         },
@@ -274,8 +276,8 @@
             "help": "module that tweaks the read atmosphere",
             "default": {
                 "Jupiter": "JupiterTweak",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "SaturnTweak",
+                "Uranus": "UranusTweak",
                 "Neptune": "NeptuneTweak"
             }
         },
@@ -351,8 +353,8 @@
             "help": "rotation velocity",
             "default": {
                 "Jupiter": 1.7585e-4,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0.0,
+                "Uranus": 1.0124e4,
                 "Neptune": 1.01237195e-4
             }
         },
@@ -362,8 +364,8 @@
             "help": "related to h2_orton - can be deprecated?",
             "default": {
                 "Jupiter": "True",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "True",
+                "Uranus": "True",
                 "Neptune": "True"
             }
         },
@@ -373,8 +375,8 @@
             "help": "gravity terms",
             "default": {
                 "Jupiter": [0.0, 0.0, 1.4697e-2, 0.0, -5.84e-4, 0.0, 0.31e-4],
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "Uranus": [0.0, 0.0, 3343.43e-6, 0.0, 0.0, 0.0, 0.0],
                 "Neptune": [0.0, 0.0, 0.3539e-2, 0.0, -0.28e-4, 0.0, 0.0]
             }
         },
@@ -384,8 +386,8 @@
             "help": "radius for gravity terms (usually Req)",
             "default": {
                 "Jupiter": 71492.0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 0.0,
+                "Uranus": 25559.0,
                 "Neptune": 24766.0
             }
         },
@@ -395,8 +397,8 @@
             "help": "type for planet shape [ellipse/reference/gravity/sphere]",
             "default": {
                 "Jupiter": "ellipse",
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": "ellipse",
+                "Uranus": "ellipse",
                 "Neptune": "ellipse"
             }
         }
