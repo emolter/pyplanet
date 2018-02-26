@@ -1,16 +1,22 @@
 def modify(gas, cloud, C, Cl):
 
     comment = "'Standard' Neptune atmospheric tweaking from Imke's code..."
+    # Ad hoc "options"
+    # ###H2S stuff
+    option = 'A'  # The "normal" NH4SH option, other is "B"
+    depleteh2s = False
+    constAmth2s = 4.0e-9  # if deplete above
+    # ###NH3 stuff
+    enhancenh3 = False
+    constAmtnh3 = 12e-9
+    enhancenh3_ver140113 = False
 
     nAtm = len(gas[C['P']])
     for i in range(nAtm):
         Plyr = gas[C['P']][i]
         Tlyr = gas[C['T']][i]
-
-        # ## Process H2S
-        depleteh2s = False
-        option = 'A'  # A = the NH4SH "normal" option
-        constAmth2s = 4e-9
+        #
+        # # ## Process H2S
         if depleteh2s:
             if option == 'A':
                 frach2s = [1.0, 0.05]
@@ -29,17 +35,14 @@ def modify(gas, cloud, C, Cl):
                     gas[C['H2S']][i] = constAmth2s
             if option == 'B':
                 if Plyr < 200.0:
-                    comment += '\nReduce H2S to .001 at {}'format(Plyr)
+                    comment += '\nReduce H2S to .001 at {}'.format(Plyr)
                     gas[C['H2S']][i] *= 0.001
                     comment += '===>>>and NH3!!!'
                     gas[C['NH3']][i] *= 0.001
-
-        # ## Process NH3
-        enhancenh3 = False
-        constAmtnh3 = 12e-9
-        enhancenh3_ver140113 = False
-        # if Tlyr > 400.0:
-        #     gas[C['NH3']][i] = 1.94E-4
+        #
+        # # ## Process NH3
+        # # if Tlyr > 400.0:
+        # #     gas[C['NH3']][i] = 1.94E-4
         if depleteh2s and option == 'B' and Plyr < 200.0:
             comment += '\nNH3 was modified above under H2S'
         if enhancenh3:
