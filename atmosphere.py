@@ -256,18 +256,12 @@ class Atmosphere:
             print(gasFile + ' was not found - returning no gas profile\n\n')
             raise IOError
         print(' ')
+        expected_number = utils.get_expected_number_of_entries(fp)
         for line in fp:
-            if line[0] in utils.commentChars or len(line) < 4:
+            cval = utils.get_data_from(line)
+            if cval is None or len(cval) != expected_number:
                 continue
-            data = line.split()
-            try:
-                cval = [float(x) for x in data]
-            except ValueError:
-                continue
-            if len(cval) > self.nConstituent:
-                print("{} has too many constituents".format(line))
-                continue
-            for n in range(self.nConstituent):  # Initialize all of the constituents to 0.0
+            for n in range(self.nConstituent):
                 if n < len(cval):
                     self.gas[n].append(cval[n])
                 else:
@@ -342,16 +336,10 @@ class Atmosphere:
             print(cloudFile, ' was not found - returning no clouds\n\n')
             raise IOError
         print(' ')
+        expected_number = utils.get_expected_number_of_entries(fp)
         for line in fp:
-            if line[0] in utils.commentChars or len(line) < 4:
-                continue
-            data = line.split()
-            try:
-                cval = [float(x) for x in data]
-            except ValueError:
-                continue
-            if len(cval) > self.nParticulate:
-                print("{} has too many particulates".format(line))
+            cval = utils.get_data_from(line)
+            if cval is None or len(cval) != expected_number:
                 continue
             for n in range(self.nParticulate):  # Initialize all of the particulates to 0.0
                 if n < len(cval):

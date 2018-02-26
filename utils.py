@@ -116,6 +116,39 @@ def ls(directory='Output', show=True, returnList=False):
         return files
 
 
+def get_data_from(line):
+    if line[0] in commentChars or len(line) < 4:
+        return None
+    data = line.split()
+    try:
+        cval = [float(x) for x in data]
+    except ValueError:
+        cval = None
+    return cval
+
+
+def get_expected_number_of_entries(fp):
+    """Ad hoc function to guess the number of file entries expected
+    """
+    numentries = {}
+    for line in fp:
+        cval = get_data_from(line)
+        if cval is None:
+            continue
+        if len(cval) in numentries.keys():
+            numentries[len(cval)] += 1
+        else:
+            numentries[len(cval)] = 1
+    fp.seek(0)
+    vmax = 0
+    nument = -1
+    for k, v in numentries.iteritems():
+        if v > vmax:
+            vmax = v
+            nument = k
+    return nument
+
+
 def bang():
     files = ls(show=False, returnList=True)
     for f in files:
