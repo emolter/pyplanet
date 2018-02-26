@@ -23,7 +23,7 @@
             "help": "atmospheric constituent file - column order set by C",
             "default": {
                 "Jupiter": "jupiter.paulSolar",
-                "Saturn": "saturn.paulSolar",
+                "Saturn": "saturn.Solar",
                 "Uranus": "uranus.paul10xsolar_wet.dat",
                 "Neptune": "neptune.paulCO_cloud21_fletcher_best_dry"
             }
@@ -67,7 +67,7 @@
             "help": "atmospheric cloud file - column order set by Cl",
             "default": {
                 "Jupiter": "jupiter.paulclSolar",
-                "Saturn": "saturn.paulclSolar",
+                "Saturn": "saturn.clSolar",
                 "Uranus": "uranus.cloud10xsolar_wet.dat",
                 "Neptune": "nepcloud_CO.cloud21_fletcher_best_dry"
             }
@@ -133,8 +133,8 @@
             "help": "equatorial radius at p_ref",
             "default": {
                 "Jupiter": 71492.0,
-                "Saturn": "",
-                "Uranus": "",
+                "Saturn": 60268.0,
+                "Uranus": 25559.0,
                 "Neptune": 24766.0
             }
         },
@@ -144,7 +144,7 @@
             "help": "polar radius at p_ref",
             "default": {
                 "Jupiter": 66854.0,
-                "Saturn": 0.0,
+                "Saturn": 54364.0,
                 "Uranus": 25559.0,
                 "Neptune": 24342.0
             }
@@ -188,7 +188,7 @@
             "help": "distance to the planet",
             "default": {
                 "Jupiter": 5.2,
-                "Saturn": 0,
+                "Saturn": 9.6,
                 "Uranus": 19.2,
                 "Neptune": 29.7
             }
@@ -210,9 +210,53 @@
             "help": "GM at radius RJ",
             "default": {
                 "Jupiter": 12.6686538e7,
-                "Saturn": 0.0,
+                "Saturn": 3.7931272e7,
                 "Uranus": 5.794e6,
                 "Neptune": 0.6835096e7
+            }
+        },
+        "omega": {
+            "name": "omega_m",
+            "unit": "rad/s",
+            "help": "rotation velocity",
+            "default": {
+                "Jupiter": 1.7585e-4,
+                "Saturn": 1.6378499e-4,
+                "Uranus": 1.0124e4,
+                "Neptune": 1.01237195e-4
+            }
+        },
+        "jn": {
+            "name": "Jn",
+            "unit": "...",
+            "help": "gravity terms",
+            "default": {
+                "Jupiter": [0.0, 0.0, 1.4697e-2, 0.0, -5.84e-4, 0.0, 0.31e-4],
+                "Saturn": [0.0, 0.0, 1.6332e-2, 0.0, -9.19e-4, 0.0, 1.04e-4],
+                "Uranus": [0.0, 0.0, 3343.43e-6, 0.0, 0.0, 0.0, 0.0],
+                "Neptune": [0.0, 0.0, 0.3539e-2, 0.0, -0.28e-4, 0.0, 0.0]
+            }
+        },
+        "rj": {
+            "name": "RJ",
+            "unit": "km",
+            "help": "radius for gravity terms (usually Req)",
+            "default": {
+                "Jupiter": 71492.0,
+                "Saturn": 60268.0,
+                "Uranus": 25559.0,
+                "Neptune": 24766.0
+            }
+        },
+        "gtype": {
+            "name": "gtype",
+            "unit": "None",
+            "help": "type for planet shape [ellipse/reference/gravity/sphere]",
+            "default": {
+                "Jupiter": "ellipse",
+                "Saturn": "ellipse",
+                "Uranus": "ellipse",
+                "Neptune": "ellipse"
             }
         },
         "zonal": {
@@ -276,8 +320,8 @@
             "help": "module that tweaks the read atmosphere",
             "default": {
                 "Jupiter": "JupiterTweak",
-                "Saturn": "SaturnTweak",
-                "Uranus": "UranusTweak",
+                "Saturn": "SaturnNoTweak",
+                "Uranus": "UranusNoTweak",
                 "Neptune": "NeptuneTweak"
             }
         },
@@ -347,17 +391,6 @@
                 "Neptune": ""
             }
         },
-        "omega": {
-            "name": "omega_m",
-            "unit": "rad/s",
-            "help": "rotation velocity",
-            "default": {
-                "Jupiter": 1.7585e-4,
-                "Saturn": 0.0,
-                "Uranus": 1.0124e4,
-                "Neptune": 1.01237195e-4
-            }
-        },
         "h2newset": {
             "name": "h2newset",
             "unit": "None",
@@ -367,39 +400,6 @@
                 "Saturn": "True",
                 "Uranus": "True",
                 "Neptune": "True"
-            }
-        },
-        "jn": {
-            "name": "Jn",
-            "unit": "...",
-            "help": "gravity terms",
-            "default": {
-                "Jupiter": [0.0, 0.0, 1.4697e-2, 0.0, -5.84e-4, 0.0, 0.31e-4],
-                "Saturn": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                "Uranus": [0.0, 0.0, 3343.43e-6, 0.0, 0.0, 0.0, 0.0],
-                "Neptune": [0.0, 0.0, 0.3539e-2, 0.0, -0.28e-4, 0.0, 0.0]
-            }
-        },
-        "rj": {
-            "name": "RJ",
-            "unit": "km",
-            "help": "radius for gravity terms (usually Req)",
-            "default": {
-                "Jupiter": 71492.0,
-                "Saturn": 0.0,
-                "Uranus": 25559.0,
-                "Neptune": 24766.0
-            }
-        },
-        "gtype": {
-            "name": "gtype",
-            "unit": "None",
-            "help": "type for planet shape [ellipse/reference/gravity/sphere]",
-            "default": {
-                "Jupiter": "ellipse",
-                "Saturn": "ellipse",
-                "Uranus": "ellipse",
-                "Neptune": "ellipse"
             }
         }
     }
