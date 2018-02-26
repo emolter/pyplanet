@@ -130,23 +130,17 @@ def get_data_from(line):
 def get_expected_number_of_entries(fp):
     """Ad hoc function to guess the number of file entries expected
     """
-    numentries = {}
+    enoe = {}
     for line in fp:
         cval = get_data_from(line)
-        if cval is None:
-            continue
-        if len(cval) in numentries.keys():
-            numentries[len(cval)] += 1
-        else:
-            numentries[len(cval)] = 1
+        if cval is not None:
+            enoe[len(cval)] = enoe.setdefault(len(cval), 0) + 1
     fp.seek(0)
-    vmax = 0
-    nument = -1
-    for k, v in numentries.iteritems():
-        if v > vmax:
-            vmax = v
-            nument = k
-    return nument
+    vm = [-1, 0]
+    for v in enoe.iteritems():
+        if v[1] > vm[1]:
+            vm = v
+    return v[0]
 
 
 def bang():
