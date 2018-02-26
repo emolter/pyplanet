@@ -13,6 +13,7 @@ import brightness as bright
 import data_handling
 import utils
 import fileIO
+import os
 
 version = '2.0'
 
@@ -21,14 +22,14 @@ class Planet:
     def __init__(self, name, config='planet', batch_mode=False, outputType='frequency', verbose=False, plot=True):
         """This is the 'executive function class to compute overall planetary emission
            Inputs:
-                name:  'Jupiter', 'Uranus', 'Neptune'
+                name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
                 batch_mode:  enable batch mode processing
                 outputType:  'frequency', 'wavelength' or 'both'
                 verbose:  True/False
                 plot:  True/False"""
 
-        planetList = ['Jupiter', 'Neptune', 'Uranus']
+        planetList = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
         self.planet = string.capitalize(name)
         self.batch_mode = batch_mode
         self.plot = plot
@@ -41,9 +42,11 @@ class Planet:
         self.imSize = None
 
         print('Planetary modeling  (ver {})\n'.format(version))
-        print("PLANET.PY_L44:  In alpha, clouds_idp need otherPar['refr'] - still?")
-        s = 'Need to fix batch mode stuff'
-        print(s * 9)
+        if 'ddeboer' in os.getcwd():
+            print("DIAGNOSTICS/NOTES FOR DAVE")
+            print("PLANET.PY_L44:  In alpha, clouds_idp need otherPar['refr'] - still?")
+            s = 'Need to fix batch mode stuff'
+            print(s * 9)
 
         if self.planet not in planetList:
             return
