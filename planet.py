@@ -131,13 +131,13 @@ class Planet:
             if self.verbose:
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
             Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, discAverage=(self.bType == 'disc'))
-            if self.bright.path is not None:
+            if self.bright.travel is not None:
                 if self.rNorm is None:
-                    self.rNorm = self.bright.path.rNorm
+                    self.rNorm = self.bright.travel.rNorm
                 if self.tip is None:
-                    self.tip = self.bright.path.tip
+                    self.tip = self.bright.travel.tip
                 if self.rotate is None:
-                    self.rotate = self.bright.path.rotate
+                    self.rotate = self.bright.travel.rotate
             if Tbt is None:  # I've now done away with returning None by returning T_cmb in brightness.py (at least I thought so...)
                 Tbt = []
                 for i in range(len(freqs)):

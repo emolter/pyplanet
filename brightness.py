@@ -64,8 +64,9 @@ class Brightness():
         if self.layerAlpha is None:
             self.layerAbsorption(freqs, atm, alpha)
         # get path lengths (ds_layer) vs layer number (num_layer) - currently frequency independent refractivity
-        self.path = ray.compute_ds(atm, b, orientation, gtype=None, verbose=self.verbose, plot=self.plot)
-        if self.path.ds is None:
+        travel = ray.compute_ds(atm, b, orientation, gtype=None, verbose=self.verbose, plot=self.plot)
+        self.travel = travel
+        if travel.ds is None:
             print('Off planet')
             self.Tb = []
             for j in range(len(freqs)):
@@ -78,23 +79,23 @@ class Brightness():
         self.Tb_lyr = [[0.0 for f in freqs]]
         self.W = [[0.0 for f in freqs]]
 
-        P = atm.gas[atm.config.C['P']]
-        T = atm.gas[atm.config.C['T']]
-        z = atm.gas[atm.config.C['Z']]
-        self.P = [P[self.path.layer4ds[0]]]
-        self.z = [z[self.path.layer4ds[0]]]
+        P_layers = atm.gas[atm.config.C['P']]
+        T_layers = atm.gas[atm.config.C['T']]
+        z_layers = atm.gas[atm.config.C['Z']]
+        self.P = [P_layers[travel.layer4ds[0]]]
+        self.z = [z_layers[travel.layer4ds[0]]]
 
-        for i in range(len(self.path.ds) - 1):
-            ds = self.path.ds[i] * utils.Units[utils.atmLayerUnit] / utils.Units['cm']
+        for i in range(len(travel.ds) - 1):
+            ds = travel.ds[i] * utils.Units[utils.atmLayerUnit] / utils.Units['cm']
             taus = []
             Ws = []
             Tbs = []
-            ii = self.path.layer4ds[i]
-            ii1 = self.path.layer4ds[i + 1]
-            T1 = T[ii1]
-            T0 = T[ii]
-            self.P.append((P[ii] + P[ii1]) / 2.0)
-            self.z.append((z[ii] + z[ii1]) / 2.0)
+            ii = travel.layer4ds[i]
+            ii1 = travel.layer4ds[i + 1]
+            T1 = T_layers[ii1]
+            T0 = T_layers[ii]
+            self.P.append((P_layers[ii] + P_layers[ii1]) / 2.0)
+            self.z.append((z_layers[ii] + z_layers[ii1]) / 2.0)
 
             if self.layerAlpha is None:
                 print("is None at ", i)
@@ -103,11 +104,11 @@ class Brightness():
                     a1 = self.layerAlpha[j][ii1]
                     a0 = self.layerAlpha[j][ii]
                 else:
-                    fshifted = [[f / self.path.doppler[i]], [f / self.path.doppler[i + 1]]]
+                    fshifted = [[f / travel.doppler[i]], [f / travel.doppler[i + 1]]]
                     print('\rdoppler corrected frequency at layer', i, end='')
-                    a1 = alpha.getAlpha(fshifted[0], T[ii1], P[ii1], atm.gas[:, ii1], atm.config.C, atm.cloud[:, ii1],
+                    a1 = alpha.getAlpha(fshifted[0], T_layers[ii1], P_layers[ii1], atm.gas[:, ii1], atm.config.C, atm.cloud[:, ii1],
                                         atm.config.Cl, units=utils.alphaUnit)
-                    a0 = alpha.getAlpha(fshifted[1], T[ii], P[ii], atm.gas[:, ii], atm.config.C, atm.cloud[:, ii],
+                    a0 = alpha.getAlpha(fshifted[1], T_layers[ii], P_layers[ii], atm.gas[:, ii], atm.config.C, atm.cloud[:, ii],
                                         atm.config.Cl, units=utils.alphaUnit)
                 dtau = (a0 + a1) * ds / 2.0
                 taus.append(self.tau[i][j] + dtau)         # this is tau_(i+1)
