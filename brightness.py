@@ -20,7 +20,6 @@ class Brightness():
         self.plot = plot
         self.log = utils.setupLogFile(log)
         self.layerAlpha = None
-        print('\n---Brightness---\n')
 
     def resetLayers(self):
         self.layerAlpha = None
@@ -74,10 +73,12 @@ class Brightness():
             return self.Tb
 
         # set and initialize arrays
+        integrated_W = []
         taus = []
         Tbs = []
         Ws = []
         for j in range(len(freqs)):
+            integrated_W.append(0.0)
             taus.append(0.0)
             Tbs.append(0.0)
             Ws.append(0.0)
@@ -122,7 +123,9 @@ class Brightness():
                     Ws.append(2.0 * a1 * ss.expn(2, taus[j]))  # this is W_(i+1) for disc average
                 else:
                     Ws.append(a1 * math.exp(-taus[j]))  # this is W_(i+1) for non disc average
-                dTb = (T1 * Ws[j] / scriptR(T1, freqs[j]) + T0 * self.W[i][j] / scriptR(T0, freqs[j])) * ds / 2.0
+                integrated_W[j] += (Ws[j] + self.W[i][j]) * ds / 2.0
+                # dTb = (T1 * Ws[j] / scriptR(T1, freqs[j]) + T0 * self.W[i][j] / scriptR(T0, freqs[j])) * ds / 2.0
+                dTb = (T1 * Ws[j] + T0 * self.W[i][j]) * ds / 2.0
                 Tbs.append(self.Tb_lyr[i][j] + dTb)
             self.tau.append(taus)
             self.W.append(Ws)
@@ -134,6 +137,8 @@ class Brightness():
             top_Tb_lyr = self.Tb_lyr[-1][j]
             if top_Tb_lyr < utils.T_cmb:
                 top_Tb_lyr = utils.T_cmb
+            else:
+                top_Tb_lyr /= integrated_W[j]  # Normalize by integrated weights (makes assumptions)
             self.Tb.append(top_Tb_lyr)
         self.tau = np.array(self.tau).transpose()
         self.W = np.array(self.W).transpose()
@@ -143,8 +148,13 @@ class Brightness():
 
         if self.plot:
             # ####-----Weigthing functions
+            plt.figure('INT_W')
+            plt.plot(freqs, integrated_W)
+            plt.title('Integrated weighting function')
+            plt.xlabel('Frequency [GHz]')
             plt.figure('radtran')
-            plt.subplot(121)
+            #plt.subplot(121)
+            normW4plot=False
             for i, f in enumerate(freqs):
                 # label=r'$\tau$: %.1f GHz' % (f)
                 # plt.semilogy(self.tau[i],self.P,label=label)
@@ -152,8 +162,8 @@ class Brightness():
                     wplot = self.W[i] / np.max(self.W[i])
                 else:
                     wplot = self.W[i]
-                label = (r'$W$: {:.1f} GHz').format(f)
-                label = (r'{:.1f} cm').format(30.0 / f)
+                label = (r'{:.1f} GHz').format(f)
+                #label = (r'{:.1f} cm').format(30.0 / f)
                 if len(wplot) == len(self.P):
                     plt.semilogy(wplot, self.P, label=label, linewidth=3)
                 else:
@@ -213,10 +223,24 @@ class Brightness():
             filename = 'tblayer_' + tag + '.out'
         self.saveTblayer(filename, path)
 
+    def saveit(self):
+        for i, f in enumerate(self.freqs):
+            filename = 'pawtt_{:.3f}.out'.format(f)
+            fp = open(filename, 'w')
+            print("{}:  Pressure, alpha, weight, tau, Tb".format(filename))
+            for j in range(len(self.P)):
+                s = '{}\t'.format(repr(self.P[j]))
+                s += '{}\t'.format(repr(self.layerAlpha[i][j]))
+                s += '{}\t'.format(repr(self.W[i][j]))
+                s += '{}\t'.format(repr(self.tau[i][j]))
+                s += '{}\n'.format(repr(self.Tb_lyr[i][j]))
+                fp.write(s)
+            fp.close()
+
     def saveAlpha(self, filename=None, path='.'):
         if filename is None:
             filename = 'alpha.out'
-        os.path.join(path, filename)
+        filename = os.path.join(path, filename)
         fp = open(filename, 'w')
         s = '#P  \tz  \t'
         for f in self.freqs:
@@ -229,7 +253,7 @@ class Brightness():
                 s += '{}\t'.format(repr(self.layerAlpha[i][j]))
             s += '\n'
             fp.write(s)
-        s = ('%s (%d x %d)').format(filename, i + 1, j + 1)
+        s = ('{} ({} x {})').format(filename, i + 1, j + 1)
 
     def saveWeight(self, norm=False, filename=None, path='.'):
         if filename is None:
@@ -247,12 +271,12 @@ class Brightness():
             else:
                 scale.append(1.0)
         for j in range(len(self.P)):
-            s = ('%s\t%.2f\t').format(repr(self.P[j]), self.z[j])
+            s = ('{}\t{:.2f}\t').format(repr(self.P[j]), self.z[j])
             for i in range(len(self.freqs)):
-                s += ('%s\t').format(repr(self.W[i][j] / scale[i]))
+                s += ('{}\t').format(repr(self.W[i][j] / scale[i]))
             s = s.strip() + '\n'
             fp.write(s)
-        s = ('%s (%d x %d)').format(filename, i + 1, j + 1)
+        s = ('{} ({} x {})').format(filename, i + 1, j + 1)
         return s
 
     def saveTau(self, filename=None, path='.'):
@@ -266,12 +290,12 @@ class Brightness():
         s += 'GHz\n'
         fp.write(s)
         for j in range(len(self.P)):
-            s = ('%s\t%.2f\t').format(repr(self.P[j]), self.z[j])
+            s = ('{}\t{:.2f}\t').format(repr(self.P[j]), self.z[j])
             for i in range(len(self.freqs)):
-                s += ('%s\t').format(repr(self.tau[j]))
+                s += ('{}\t').format(repr(self.tau[i][j]))
             s += '\n'
             fp.write(s)
-        s = ('%s (%d x %d)').format(filename, i + 1, j + 1)
+        s = ('{} ({} x {})').format(filename, i + 1, j + 1)
         return s
 
     def saveTblayer(self, filename=None, path='.'):
@@ -281,16 +305,16 @@ class Brightness():
         fp = open(filename, 'w')
         s = '#P  \tz  \t'
         for f in self.freqs:
-            s += ('%.2f\t').format(f)
+            s += ('{:.2f}\t').format(f)
         s += 'GHz\n'
         fp.write(s)
         for j in range(len(self.P)):
             s = ('{}\t{:.2f}\t').format(repr(self.P[j]), self.z[j])
             for i in range(len(self.freqs)):
-                s += ('%s\t').format(repr(self.Tb_lyr[j]))
+                s += ('{}\t').format(repr(self.Tb_lyr[i][j]))
             s += '\n'
             fp.write(s)
-        s = ('%s (%d x %d)').format(filename, i + 1, j + 1)
+        s = ('{} ({} x {})').format(filename, i + 1, j + 1)
         return s
 
 

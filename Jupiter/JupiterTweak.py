@@ -7,6 +7,8 @@ def modify(gas, cloud, C, Cl):
         Plyr = gas[C['P']][i]
         Tlyr = gas[C['T']][i]
 
+        if Plyr < 1e-3:
+            gas[C['NH3']][i] = 1e-12
         # ## Process H2S
 
         # ## Process NH3

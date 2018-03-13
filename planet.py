@@ -312,7 +312,6 @@ class Planet:
         self.header['freqs'] = '# freqs request: {} {}\n'.format(str(freqs), freqUnit)
         # ## Process frequency range "request"
         if type(freqs) == str:
-            print('Loading frequencies from file:  ', freqs)
             freqs = np.loadtxt(freqs)
             freqs = list(freqs)  # convert numpy array back to list (for no good reason really)
         elif type(freqs) != list:
@@ -320,7 +319,6 @@ class Planet:
         # We now have a list, check if first entry is a keyword
         if type(freqs[0]) == str:
             if freqs[0][0].lower() == 'r' and len(freqs) == 4:
-                print('Computing frequency range...')
                 fstart = freqs[1]
                 fstop = freqs[2]
                 fstep = freqs[3]

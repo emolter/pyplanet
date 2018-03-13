@@ -20,12 +20,12 @@ class Alpha:
         self.verbose = verbose
         self.plot = plot
         self.log = utils.setupLogFile(log)
-        print('\n---Alpha---\n')
 
         # Get possible constituents
         possible = []
         self.constituentsAreAt = prog_path.constituentPath
-        s = 'Reading in absorption modules from ' + self.constituentsAreAt + '\n'
+        if verbose:
+            s = 'Reading in absorption modules from ' + self.constituentsAreAt + '\n'
         utils.log(self.log, s, True)
         for d in os.listdir(self.constituentsAreAt):
             fnd = os.path.join(self.constituentsAreAt, d)
