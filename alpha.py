@@ -24,9 +24,8 @@ class Alpha:
         # Get possible constituents
         possible = []
         self.constituentsAreAt = prog_path.constituentPath
-        if verbose:
-            s = 'Reading in absorption modules from ' + self.constituentsAreAt + '\n'
-        utils.log(self.log, s, True)
+        s = 'Reading in absorption modules from ' + self.constituentsAreAt + '\n'
+        utils.log(self.log, s, verbose)
         for d in os.listdir(self.constituentsAreAt):
             fnd = os.path.join(self.constituentsAreAt, d)
             if os.path.isdir(fnd):
