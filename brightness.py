@@ -73,18 +73,10 @@ class Brightness():
             return self.Tb
 
         # set and initialize arrays
-        integrated_W = []
-        taus = []
-        Tbs = []
-        Ws = []
-        for j in range(len(freqs)):
-            integrated_W.append(0.0)
-            taus.append(0.0)
-            Tbs.append(0.0)
-            Ws.append(0.0)
-        self.tau = [taus]
-        self.W = [Ws]
-        self.Tb_lyr = [Tbs]
+        integrated_W = [0.0 for f in freqs]
+        self.tau = [[0.0 for f in freqs]]
+        self.Tb_lyr = [[0.0 for f in freqs]]
+        self.W = [[0.0 for f in freqs]]
 
         P = atm.gas[atm.config.C['P']]
         T = atm.gas[atm.config.C['T']]
@@ -124,7 +116,6 @@ class Brightness():
                 else:
                     Ws.append(a1 * math.exp(-taus[j]))  # this is W_(i+1) for non disc average
                 integrated_W[j] += (Ws[j] + self.W[i][j]) * ds / 2.0
-                # dTb = (T1 * Ws[j] / scriptR(T1, freqs[j]) + T0 * self.W[i][j] / scriptR(T0, freqs[j])) * ds / 2.0
                 dTb = (T1 * Ws[j] + T0 * self.W[i][j]) * ds / 2.0
                 Tbs.append(self.Tb_lyr[i][j] + dTb)
             self.tau.append(taus)
@@ -140,7 +131,7 @@ class Brightness():
             else:
                 top_Tb_lyr /= integrated_W[j]  # Normalize by integrated weights (makes assumptions)
                 if integrated_W[j] < 0.96:
-                    print("Weight correction at {:.2f} is {:.4f}".format(freqs[j], integrated_W[j]))
+                    print("Weight correction at {:.2f} is {:.4f} (showing below 0.96)".format(freqs[j], integrated_W[j]))
             self.Tb.append(top_Tb_lyr)
         self.tau = np.array(self.tau).transpose()
         self.W = np.array(self.W).transpose()
@@ -155,8 +146,7 @@ class Brightness():
             plt.title('Integrated weighting function')
             plt.xlabel('Frequency [GHz]')
             plt.figure('radtran')
-            #plt.subplot(121)
-            normW4plot=False
+            plt.subplot(121)
             for i, f in enumerate(freqs):
                 # label=r'$\tau$: %.1f GHz' % (f)
                 # plt.semilogy(self.tau[i],self.P,label=label)
