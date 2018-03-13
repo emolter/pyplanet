@@ -139,6 +139,8 @@ class Brightness():
                 top_Tb_lyr = utils.T_cmb
             else:
                 top_Tb_lyr /= integrated_W[j]  # Normalize by integrated weights (makes assumptions)
+                if integrated_W[j] < 0.96:
+                    print("Weight correction at {:.2f} is {:.4f}".format(freqs[j], integrated_W[j]))
             self.Tb.append(top_Tb_lyr)
         self.tau = np.array(self.tau).transpose()
         self.W = np.array(self.W).transpose()
