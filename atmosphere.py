@@ -91,7 +91,7 @@ class Atmosphere:
             else:
                 self.cloudGen[cloudType](verbose=self.verbose)
 
-            if tweak:  # This loads and calls the module 'tweakFile'
+            if tweak:  # This loads and calls the module as given in the config.par tweakfile parameter
                 self.tweakAtm()
 
             # ## Compute other parameters that are needed
