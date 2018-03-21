@@ -1,15 +1,12 @@
 def modify(gas, cloud, C, Cl):
 
-    comment = "'Standard' Neptune atmospheric tweaking from Imke's code..."
+    comment = "No Tweaking done, except add in 0.0's"
 
     nAtm = len(gas[C['P']])
     for i in range(nAtm):
 
         # ## Process CO
-        if gas[C['P']][i] > 0.1585:
-            gas[C['CO']][i] = 0.0
-        else:
-            gas[C['CO']][i] = 1.0E-6
+        gas[C['CO']][i] = 0.0
         # ## Process CO13
         gas[C['CO13']][i] = 1.0E-2 * gas[C['CO']][i]
 

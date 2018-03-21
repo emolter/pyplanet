@@ -140,12 +140,12 @@ Psat_all = {'H2S': {'ice': H2S_over_H2S_ice, 'liquid': H2S_over_liquid_H2S},
 
 class ConstituentProperties:
     def __init__(self, constituent):
-        self.constituent = constituent
-        self.amu = amu[constituent]
-        self.triple_point = triple_point[constituent]
-        self.cp = specific_heat[constituent]
-        self.solar = solar_abundance[constituent]
-        self.Psat_dict = Psat_all[constituent]
+        self.constituent = constituent.upper()
+        self.amu = amu[self.constituent]
+        self.triple_point = triple_point[self.constituent]
+        self.cp = specific_heat[self.constituent]
+        self.solar = solar_abundance[self.constituent]
+        self.Psat_dict = Psat_all[self.constituent]
 
     def Psat(self, T):
         k = 'all'
