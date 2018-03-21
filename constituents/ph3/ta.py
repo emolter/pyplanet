@@ -1,14 +1,9 @@
 import ph3_jh
 import matplotlib.pyplot as plt
 import math
+import numpy as np
 
-f = []
-fmin = 1.0
-fmax = 500.0
-fstep = 1.0
-n = int(math.ceil((fmax-fmin)/fstep))+1
-for i in range(n):
-    f.append(fmin + i*fstep)
+f = np.arange(1.0, 2000.0, 1.0)
 
 P = 0.1
 T = 300.0
