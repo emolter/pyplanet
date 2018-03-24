@@ -38,7 +38,7 @@ class Alpha:
             try:
                 fp = open(fn, 'r')
             except IOError:
-                utils.log(self.log, 'No file ' + fn, True)
+                utils.log(self.log, 'No file ' + fn, False)
                 continue
             absorber = fp.readline().strip()
             testabs = absorber.split('.')

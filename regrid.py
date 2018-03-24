@@ -55,6 +55,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     gas = np.zeros((nGas, nAtm))
     nCloud = atm.cloud.shape[0]
     cloud = np.zeros((nCloud, nAtm))
+    atm.computeProp(False)  # We need to do this to interpolate/extrapolate along the adiabat
 
     # ## Interpolate gas onto the grid
     fillval = -999.9
@@ -131,6 +132,9 @@ def extrapolate(gas, fillval, atm):
             if P > Pmax:
                 gas[atm.config.C[yvar]][i] = val
     # extrapolate T and z as dry adiabat in hydrostatic equilibrium
+    gDeep = atm.layerProperty[atm.config.LP['g']][-1]
+    pDeep = atm.layerProperty[atm.config.LP['P']][-1]
+    rDeep = atm.layerProperty[atm.config.LP['R']][-1]
     for i, P in enumerate(gas[atm.config.C['P']]):
         if P > Pmax:
             dP = P - gas[atm.config.C['P']][i - 1]
@@ -145,7 +149,7 @@ def extrapolate(gas, fillval, atm):
             dT = (chemistry.R * T) / (cp * P) * dP
             gas[atm.config.C['T']][i] = T + dT
 
-            g = gpar[0] + 2.0 * chemistry.R * T * np.log(P / gpar[2]) / (gpar[1] * amu) / 1000.0
+            g = gDeep + 2.0 * chemistry.R * T * np.log(P / pDeep) / (rDeep * amu) / 1000.0
             H = chemistry.R * T / (amu * g) / 1000.0
             dz = H * dP / P
             gas[atm.config.C['Z']][i] = gas[atm.config.C['Z']][i - 1] - dz

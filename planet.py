@@ -15,7 +15,7 @@ import utils
 import fileIO
 import os
 
-version = '2.0'
+version = '2.2'
 
 
 class Planet:
@@ -24,7 +24,7 @@ class Planet:
            Inputs:
                 name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
-                batch_mode:  enable batch mode processing
+                batch_mode:  enable batch mode processing (ignores lots of stuff)
                 outputType:  'frequency', 'wavelength' or 'both'
                 verbose:  True/False
                 plot:  True/False"""
