@@ -1,34 +1,27 @@
 from __future__ import absolute_import, division, print_function
 import string
-import matplotlib.mlab as mlab
 from scipy.interpolate import interp1d
 import numpy as np
 import prog_path
 import atmosphere
-import properties
+import chemistry
 
 
 def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     """This puts atm and cloud on the same grid used later for calculations.  It has three different regimes:
-        1 - interpolating within given points:  P,T,z are assumed to follow given adiabat and constituents are linearly interpolated
-            NOTE FOR NOW IT JUST DOES THE LINEAR INTERPOLATION
-        2 - extrapolating outward:  project last slope out
+        1 - interpolating within given points:  currently linear -- moving to: P,T,z are assumed to follow given adiabat
+        2 - extrapolating outward:  project last slope out for everything
         3 - extrapolating inward:  uses a dry adiabat
-       It has three types:
+       It has two regridTypes:
         1 - pressure grid points in file
             format: 'filename' (string)
                 where
                     'filename' is a file with the pressures in bars (increasing pressure)
-        2 - fixed z step NOT IMPLEMENTED YET
-            format:  'step unit'
-                where
-                    'step' step size (float)
-                    'unit' km only right now (string)
-        3 - fixed number of steps in logP
+        2 - fixed number of steps in logP
             format:  'number'
-                    where
-                        'number' numbers of steps within range (int)
-       Pmin/Pmax are optional for type 2/3 (defaults are min/max in gas) and not used in type 1."""
+                    where 'number' is number of steps within range (int)
+    """
+
     verbose = False
     # set regridType/regrid
     if regridType is None:
@@ -40,23 +33,15 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     # set default Pmin/Pmax
     if Pmin is None or Pmin == 'auto' or Pmin == 0:
         Pmin = min(atm.gas[atm.config.C['P']])
-    if Pmax is None or Pmin == 'auto' or Pmax == -1:
+    if Pmax is None or Pmin == 'auto' or Pmax == 0:
         Pmax = max(atm.gas[atm.config.C['P']])
 
-    # set Pgrid (pressure grid points)
+    # set Pgrid
     if isinstance(regridType, str):
-        regrid = regridType.split()
-        if len(regrid) == 1:
-            try:
-                regridType = int(regrid[0])
-            except ValueError:
-                regrid_file = os.path.join(atm.config.path, regrid[0])
-                Pgrid = _procF_(regrid_file)
-        elif len(regrid) == 2:
-            regrid_stepsize = float(regrid[0])
-            regrid_unit = regrid[1]
-            print("This is meant to be step and unit, but not implemented.")
-            return 0
+        try:
+            regridType = int(regridType)
+        except ValueError:
+            Pgrid = _procF_(os.path.join(atm.config.path, regridType))
     if isinstance(regridType, int):
         regrid_numsteps = regridType
         Pgrid = np.logspace(np.log10(Pmin), np.log10(Pmax), regrid_numsteps)
@@ -72,46 +57,23 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     cloud = np.zeros((nCloud, nAtm))
 
     # ## Interpolate gas onto the grid
-    berr = False
-    interpType = 'linear'
     fillval = -999.9
-    Pinput = atm.gas[atm.config.C['P']]
-    gas[atm.config.C['P']] = Pgrid
-    for yvar in atm.config.C:
-        if yvar == 'P':
-            continue
-        fv = interp1d(Pinput, atm.gas[atm.config.C[yvar]], kind=interpType, fill_value=fillval, bounds_error=berr)
-        gas[atm.config.C[yvar]] = fv(Pgrid)
+    gas = interpolate('gas', gas, fillval, atm, Pgrid)
+
     # ## Extrapolate gas if needed
     if fillval in gas:
-        gpar = (atm.layerProperty[atm.config.LP['g']][-1], atm.layerProperty[atm.config.LP['R']][-1], atm.layerProperty[atm.config.LP['P']][-1])
-        gas = extrapolate(gas, fillval, atm, gpar)
+        gas = extrapolate(gas, fillval, atm)
     atm.gas = gas
 
     # ## Interpolate cloud onto the grid - fillval=0.0 extrapolates since we assume no clouds outside range and
     # ##      don't care about other stuff then either
     fillval = 0.0
-    Pinput = atm.cloud[atm.config.Cl['P']]
-    cloud[atm.config.Cl['P']] = Pgrid
-    for yvar in atm.config.Cl:
-        if yvar == 'P':
-            continue
-        fv = interp1d(Pinput, atm.cloud[atm.config.Cl[yvar]], kind=interpType, fill_value=fillval, bounds_error=berr)
-        cloud[atm.config.Cl[yvar]] = fv(Pgrid)
-    atm.cloud = cloud
+    atm.cloud = interpolate('cloud', cloud, fillval, atm, Pgrid)
 
-    # renormalize such that zDeep = 0.0
-    zDeep = atm.gas[atm.config.C['Z']][-1]
-    if abs(zDeep) > 1E-6:
-        for i in range(len(atm.gas[atm.config.C['Z']])):
-            atm.gas[atm.config.C['Z']][i] -= zDeep
-        print('Deepest levels set from {:.1f} to 0'.format(zDeep))
+    # renormalize such that zDeep = 0.0 and reset DZ
+    atm.renorm_z('gas')
+    atm.renorm_z('cloud')
 
-    # put in DZ
-    dz = np.abs(np.diff(gas[atm.config.C['Z']])) * 1.0E5  # convert from km to cm (so no unit checking!!!)
-    gas[atm.config.C['DZ']] = np.append(np.array([0.0]), dz)
-
-    atm.computeProp(False)
     print('Regrid:  {} levels'.format(nAtm))
     return 1
 
@@ -134,13 +96,35 @@ def _procF_(filename):
     return Pgrid
 
 
-def extrapolate(gas, fillval, atm, gpar):
+def interpolate(gctype, gas_or_cloud, fillval, atm, Pgrid):
+    # ## Interpolate gas/cloud onto the grid - currently both linear
+    berr = False
+    interpType = 'linear'
+
+    if gctype == 'gas':  # Eventually do this using tcm stuff
+        ind = atm.config.C
+        atm_gc = atm.gas
+    else:
+        ind = atm.config.Cl
+        atm_gc = atm.cloud
+
+    Pinput = atm_gc[ind['P']]
+    gas_or_cloud[ind['P']] = Pgrid
+    for yvar in ind:
+        if yvar in ['P', 'DZ']:
+            continue
+        fv = interp1d(Pinput, atm_gc[ind[yvar]], kind=interpType, fill_value=fillval, bounds_error=berr)
+        gas_or_cloud[ind[yvar]] = fv(Pgrid)
+    return gas_or_cloud
+
+
+def extrapolate(gas, fillval, atm):
     """First extrapolate in, then the rest of the fillvals get extrapolated out"""
     Pmin = min(atm.gas[atm.config.C['P']])
     Pmax = max(atm.gas[atm.config.C['P']])
     # extrapolate constituents in as fixed mixing ratios
     for yvar in atm.config.C:
-        if yvar == 'Z' or yvar == 'P' or yvar == 'T' or yvar == 'DZ':
+        if yvar in ['Z', 'P', 'T', 'DZ']:
             continue
         val = atm.gas[atm.config.C[yvar]][-1]
         for i, P in enumerate(gas[atm.config.C['P']]):
@@ -152,32 +136,32 @@ def extrapolate(gas, fillval, atm, gpar):
             dP = P - gas[atm.config.C['P']][i - 1]
             P = gas[atm.config.C['P']][i - 1]
             T = gas[atm.config.C['T']][i - 1]
-            cp = 0.0
-            for key in properties.specific_heat:
-                if key in atm.config.C:
-                    cp += properties.specific_heat[key] * gas[atm.config.C[key]][i]
-            cp *= properties.R  # since the catalogued values are Cp/R
-            dT = (properties.R * T) / (cp * P) * dP
-            gas[atm.config.C['T']][i] = T + dT
             amu = 0.0
-            for key in properties.amu:
-                if key in atm.config.C:
-                    amu += properties.amu[key] * gas[atm.config.C[key]][i]
-            g = gpar[0] + 2.0 * properties.R * T * np.log(P / gpar[2]) / (gpar[1] * amu) / 1000.0
-            H = properties.R * T / (amu * g) / 1000.0
+            cp = 0.0
+            for key in atm.chem:
+                cp += atm.chem[key].specific_heat * gas[atm.config.C[key]][i]
+                amu += atm.chem[key].amu * gas[atm.config.C[key]][i]
+            cp *= chemistry.R  # since the catalogued values are Cp/R
+            dT = (chemistry.R * T) / (cp * P) * dP
+            gas[atm.config.C['T']][i] = T + dT
+
+            g = gpar[0] + 2.0 * chemistry.R * T * np.log(P / gpar[2]) / (gpar[1] * amu) / 1000.0
+            H = chemistry.R * T / (amu * g) / 1000.0
             dz = H * dP / P
             gas[atm.config.C['Z']][i] = gas[atm.config.C['Z']][i - 1] - dz
     return gas
 
     # extrapolate out along last slope (move return gas above if you think you want this)
-    for yvar in atm.config.C:
-        if yvar == 'P':
-            continue
-        gas[atm.config.C[yvar]] = extrapolateOut(gas[atm.config.C['P']], gas[atm.config.C[yvar]], fillval)
+    if fillval in gas:
+        for yvar in atm.config.C:
+            if yvar in ['P', 'DZ']:
+                continue
+            gas[atm.config.C[yvar]] = extrapolateOut(gas[atm.config.C['P']], gas[atm.config.C[yvar]], fillval)
+
+    return gas
 
 
 def extrapolateOut(x, y, fillval):
-    b = mlab.find(y != fillval)
     if y[0] == fillval:
         slope = (y[b[0] + 1] - y[b[0]]) / (x[b[0] + 1] - x[b[0]])
         intercept = y[b[0]] - slope * x[b[0]]
