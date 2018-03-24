@@ -99,10 +99,10 @@
             "unit": "None",
             "help": "This dictionary has other parameters.",
             "default": {
-                "Jupiter": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9},
-                "Saturn": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9},
-                "Uranus": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9},
-                "Neptune": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "g": 9}
+                "Jupiter": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10},
+                "Saturn": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10},
+                "Uranus": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10},
+                "Neptune": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10}
             }
         },
         "otherfile": {

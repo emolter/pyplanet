@@ -326,6 +326,7 @@ class Atmosphere:
             if not i:
                 self.layerProperty[self.config.LP['GM']].append(0.0)
                 self.layerProperty[self.config.LP['LAPSE']].append(0.0)
+                self.layerProperty[self.config.LP['LAPSEP']].append(0.0)
             else:
                 rho = (amulyr * P) / (chemistry.R * T)
                 dr = abs(zv - self.gas[self.config.C['Z']][i - 1])
@@ -334,7 +335,9 @@ class Atmosphere:
                 GdM = self.layerProperty[self.config.LP['GM']][i - 1] + chemistry.GravConst * dM    # in km3/s2
                 self.layerProperty[self.config.LP['GM']].append(GdM)  # mass added as you make way into atmosphere by radius r (times G)
                 dT = abs(T - self.gas[self.config.C['T']][i - 1])
+                dP = abs(P - self.gas[self.config.C['P']][i - 1])
                 self.layerProperty[self.config.LP['LAPSE']].append(dT / dr)
+                self.layerProperty[self.config.LP['LAPSEP']].append(dT / dP)
             # ##set refractivity and index of refraction
             refrlyr = 0.0
             for key in self.chem:

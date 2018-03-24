@@ -101,14 +101,14 @@ def interpolate(gctype, gas_or_cloud, fillval, atm, Pgrid):
     # ## Interpolate gas/cloud onto the grid - currently both linear
     berr = False
     interpType = 'linear'
-    use_lapse_hydro = True  # This will use adiabat and hydrostatic for T and Z
+    use_lapse_hydro = False  # This will use adiabat and hydrostatic for T and Z
 
     if gctype == 'gas':
         ind = atm.config.C
         atm_gc = atm.gas
         Pinput = atm_gc[ind['P']]
         if use_lapse_hydro:
-            fv = interp1d(Pinput, atm.layerProperty[atm.config.LP['LAPSE']], kind=interpType, fill_value=0.0, bounds_error=False)
+            fv = interp1d(Pinput, atm.layerProperty[atm.config.LP['LAPSEP']], kind=interpType, fill_value=0.0, bounds_error=False)
             S = {}
             S['T'] = fv(Pgrid)  # Lapse rate
             fv = interp1d(Pinput, atm.layerProperty[atm.config.LP['H']], kind=interpType, fill_value=0.0, bounds_error=False)
@@ -124,49 +124,35 @@ def interpolate(gctype, gas_or_cloud, fillval, atm, Pgrid):
                 dP.append(Ptrial - p)
                 xvar['Z'].append(atm.gas[atm.config.C['Z']][i])
                 xvar['T'].append(atm.gas[atm.config.C['T']][i])
-            # atmosphere.plt.figure('LAPSE')
-            # atmosphere.plt.plot(atm.layerProperty[atm.config.LP['P']], atm.layerProperty[atm.config.LP['LAPSE']])
-            # atmosphere.plt.plot(Pgrid, S['T'])
-            # atmosphere.plt.figure('H')
-            # atmosphere.plt.plot(atm.layerProperty[atm.config.LP['P']], atm.layerProperty[atm.config.LP['H']])
-            # atmosphere.plt.plot(Pgrid, S['Z'])
-            # atmosphere.plt.figure('dP')
-            # atmosphere.plt.plot(dP)
-            # atmosphere.plt.figure('P')
-            # atmosphere.plt.plot(Pinput)
-            # atmosphere.plt.plot(Pgrid)
-            # atmosphere.plt.figure('Z')
-            # atmosphere.plt.plot(Pinput, atm.gas[atm.config.C['Z']])
-            # atmosphere.plt.plot(Pgrid, xvar['Z'])
-            # atmosphere.plt.figure('T')
-            # atmosphere.plt.plot(Pinput, atm.gas[atm.config.C['T']])
-            # atmosphere.plt.plot(Pgrid, xvar['T'])
+            dP = np.array(dP)
+            testing = {}
     else:
         ind = atm.config.Cl
         atm_gc = atm.cloud
         Pinput = atm_gc[ind['P']]
 
     gas_or_cloud[ind['P']] = Pgrid
-    tst = {}
     for yvar in ind:
         if yvar in ['P', 'DZ']:
             continue
         if use_lapse_hydro and gctype == 'gas' and yvar in ['Z', 'T']:
+            testing[yvar] = xvar[yvar] + dP * S[yvar]
             #gas_or_cloud[ind[yvar]] = xvar[yvar] + dP * S[yvar]
-            tst[yvar] = xvar[yvar] + dP * S[yvar]
             #continue
         fv = interp1d(Pinput, atm_gc[ind[yvar]], kind=interpType, fill_value=fillval, bounds_error=berr)
         gas_or_cloud[ind[yvar]] = fv(Pgrid)
 
-    if use_lapse_hydro and gctype == 'gas':
-        atmosphere.plt.figure('NEWZ')
-        atmosphere.plt.plot(Pgrid, tst['Z'], 'b+')
+    if gctype == 'gas' and use_lapse_hydro:
+        print("use_lapse_hydro does not work well and linear works really well")
+        atmosphere.plt.figure("NEWZ")
+        atmosphere.plt.plot(Pinput, atm_gc[ind['Z']], 'r.')
+        atmosphere.plt.plot(Pgrid, testing['Z'], 'b+')
         atmosphere.plt.plot(Pgrid, gas_or_cloud[ind['Z']], 'gx')
-        atmosphere.plt.plot(Pinput, atm.gas[ind['Z']], 'r')
-        atmosphere.plt.figure('NEWT')
-        atmosphere.plt.plot(Pgrid, tst['T'], 'b+')
+        atmosphere.plt.figure("NEWT")
+        atmosphere.plt.plot(Pinput, atm_gc[ind['T']], 'r.')
+        atmosphere.plt.plot(Pgrid, testing['T'], 'b+')
         atmosphere.plt.plot(Pgrid, gas_or_cloud[ind['T']], 'gx')
-        atmosphere.plt.plot(Pinput, atm.gas[ind['T']], 'r')
+
     return gas_or_cloud
 
 
