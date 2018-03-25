@@ -1,12 +1,10 @@
 from __future__ import absolute_import, division, print_function
 import math
-import string
 import matplotlib.pyplot as plt
 import numpy as np
 import utils
 import sys
 import os
-import os.path
 
 # ##local imports
 import prog_path
@@ -15,20 +13,16 @@ import raypath as ray
 import chemistry
 import regrid
 
-planetDictionary = {'Jupiter': 0, 'Saturn': 1, 'Uranus': 2, 'Neptune': 3}
-
 
 class Atmosphere:
     def __init__(self, planet, config='config.par', path=None, log=None, batch=False, verbose=False, plot=True):
-        """reads/computes atmospheres.  This should return:
+        """reads/computes atmospheres.  This returns:
                self.gas
                self.cloud
                self.layerProperty
-            on the appropriate grid
-            Note that the research is in the input files and modifying the tweak modules
-            All of the default config parameters are hard-coded here:  see __init__, setConfig, showConfig."""
+            on the appropriate grid."""
 
-        planet = string.capitalize(planet)
+        planet = planet.capitalize()
         self.planet = planet
         self.verbose = verbose
         self.plot = plot
@@ -379,7 +373,7 @@ class Atmosphere:
     def plotTP(self, plot='auto'):
         """Plot the T-P profile"""
         if plot == 'auto':
-            plt.figure(planetDictionary[self.planet])
+            plt.figure(self.planet + ': T-P')
         plt.title(self.planet + ':  T-P profile')
         plt.loglog(self.gas[self.config.C['T']], self.gas[self.config.C['P']])
         v = list(plt.axis())
@@ -392,7 +386,7 @@ class Atmosphere:
     def plotCloud(self, dontPlot=['Z', 'P', 'T', 'DZ'], plot='auto'):
         """Plots the clouds"""
         if plot == 'auto':
-            plt.figure(planetDictionary[self.planet] + 11)
+            plt.figure(self.planet + ': clouds')
         plt.title(self.planet + ': clouds')
         for cloud in self.config.Cl:
             present, cl = self.__isPresent__(self.cloud[self.config.Cl[cloud]])
@@ -412,7 +406,7 @@ class Atmosphere:
     def plotGas(self, dontPlot=['Z', 'P', 'T', 'DZ'], plot='auto'):
         """Plots the constituents"""
         if plot == 'auto':
-            plt.figure(planetDictionary[self.planet] + 10)
+            plt.figure(self.planet + ': gas')
         plt.title(self.planet + ': gas')
         for gas in self.config.C:
             present, g = self.__isPresent__(self.gas[self.config.C[gas]])
@@ -431,7 +425,7 @@ class Atmosphere:
 
     def plotProp(self, dontPlot=['Z', 'P', 'T'], plot='auto'):
         if plot == 'auto':
-            plt.figure(planetDictionary[self.planet] + 12)
+            plt.figure(self.planet + ': Properties')
         plt.title(self.planet + ': other')
         for other in self.config.LP:
             present, g = self.__isPresent__(self.layerProperty[self.config.LP[other]])

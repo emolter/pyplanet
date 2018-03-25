@@ -4,7 +4,6 @@ import math
 import scipy.special as scisp
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
-import string
 import prog_path
 import utils as u
 import atmosphere

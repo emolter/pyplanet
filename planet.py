@@ -1,7 +1,6 @@
 #  This is the 'executive' class for planets
 from __future__ import absolute_import, division, print_function
 import math
-import string
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
@@ -30,7 +29,7 @@ class Planet:
                 plot:  True/False"""
 
         planetList = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
-        self.planet = string.capitalize(name)
+        self.planet = name.capitalize()
         self.batch_mode = batch_mode
         self.plot = plot
         self.verbose = verbose
@@ -43,10 +42,11 @@ class Planet:
 
         print('Planetary modeling  (ver {})\n'.format(version))
         if 'ddeboer' in os.getcwd():
-            print("DIAGNOSTICS/NOTES FOR DAVE")
+            print("\nDIAGNOSTICS/NOTES FOR DAVE")
             print("PLANET.PY_L44:  In alpha, clouds_idp need otherPar['refr'] - still?")
             s = 'Need to fix batch mode stuff'
             print(s * 9)
+            print("\n\n")
 
         if self.planet not in planetList:
             return
