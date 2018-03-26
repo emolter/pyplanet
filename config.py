@@ -32,8 +32,6 @@ class planetConfig:
         with open('config.json', 'r') as f:
             config_data = json.load(f)
         self.toks = config_data['toks']
-        self.possibleConstituents = config_data['possibleConstituents'].split()
-        self.possibleClouds = config_data['possibleClouds'].split()
 
         # Set defaults
         for tok in self.toks:
@@ -86,7 +84,11 @@ class planetConfig:
             elif typetok == dict:
                 val = {}
                 for i, v in enumerate(data):
-                    val[v.strip()] = i
+                    if ':' in v:
+                        frml = v.split(':')
+                        val[frml[0].lower().strip()] = set_single_val(frml[1].lower().strip())
+                    else:
+                        val[v.strip()] = i
             else:
                 print("Incorrect type:  {} <{}>".format(tok, typetok))
                 continue

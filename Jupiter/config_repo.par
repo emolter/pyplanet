@@ -10,6 +10,7 @@
 ### gas data
 gasfile jupiter.paulvla10d
 constituents Z T P H2 HE CH4 NH3 H2O H2S SOLN OTHER PH3 CO CO13 HCN DZ
+alpha nh3:nh3_dbs_sjs h2s:h2s_ddb h2o:h2o_bk ph3:ph3_jh h2:h2_jj_ddb
 ### cloud data
 cloudfile jupiter.paulclvla10d
 clouds Z T P SOLN H2O NH4SH NH3 H2S CH4 AR PH3 DZ

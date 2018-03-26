@@ -1,6 +1,4 @@
 {
-    "possibleConstituents": "H2 HE CH4 NH3 H2O H2S PH3 CO CO13 HCN",
-    "possibleClouds": "SOLN H2O NH4SH NH3 H2S CH4 AR PH3",
     "toks": {
         "constituents": {
             "name": "C",
@@ -17,6 +15,17 @@
                             "PH3": 11, "CO": 12, "CO13": 13, "HCN": 14, "DZ": 15}
             }
         },
+        "alpha": {
+            "name": "constituent_alpha",
+            "unit": "None",
+            "help": "This dictionary sets which absoprtion formalisms to use",
+            "default": {
+                "Jupiter": {"clouds": "None", "co": "None", "h2": "None", "h2o": "None", "h2s": "None", "hcn": "None", "nh3": "None", "ph3": "None"},
+                "Saturn": {"clouds": "None", "co": "None", "h2": "None", "h2o": "None", "h2s": "None", "hcn": "None", "nh3": "None", "ph3": "None"},
+                "Uranus": {"clouds": "None", "co": "None", "h2": "None", "h2o": "None", "h2s": "None", "hcn": "None", "nh3": "None", "ph3": "None"},
+                "Neptune": {"clouds": "None", "co": "None", "h2": "None", "h2o": "None", "h2s": "None", "hcn": "None", "nh3": "None", "ph3": "None"}
+            }
+        },
         "gasfile": {
             "name": "gasFile",
             "unit": "None",
@@ -26,17 +35,6 @@
                 "Saturn": "saturn.Solar",
                 "Uranus": "uranus.paul10xsolar_wet.dat",
                 "Neptune": "neptune.paulCO_cloud21_fletcher_best_dry"
-            }
-        },
-        "gasfilehdr": {
-            "name": "gasFileHdr",
-            "unit": "None",
-            "help": "NO LONGER USED BUT KEPT FOR BACKWARD COMPATIBILITY number of header lines (to ignore) in gasFile",
-            "default": {
-                "Jupiter": 0,
-                "Saturn": 0,
-                "Uranus": 0,
-                "Neptune": 0
             }
         },
         "gastype": {
@@ -72,17 +70,6 @@
                 "Neptune": "nepcloud_CO.cloud21_fletcher_best_dry"
             }
         },
-        "cloudfilehdr": {
-            "name": "cloudFileHdr",
-            "unit": "None",
-            "help": "NO LONGER USED BUT KEPT FOR BACKWARD COMPATIBILITY number of header lines (to ignore) in cloudFile",
-            "default": {
-                "Jupiter": 0,
-                "Saturn": 0,
-                "Uranus": 0,
-                "Neptune": 0
-            }
-        },
         "cloudtype": {
             "name": "cloudType",
             "unit": "None",
@@ -103,17 +90,6 @@
                 "Saturn": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10},
                 "Uranus": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10},
                 "Neptune": {"Z": 0, "R": 1, "P": 2, "GM": 3, "AMU": 4, "REFR": 5, "N": 6, "H": 7, "LAPSE": 8, "LAPSEP": 9, "g": 10}
-            }
-        },
-        "otherfile": {
-            "name": "otherFile",
-            "unit": "None",
-            "help": "some other file",
-            "default": {
-                "Jupiter": "None",
-                "Saturn": "None",
-                "Uranus": "None",
-                "Neptune": "None"
             }
         },
         "othertype": {
