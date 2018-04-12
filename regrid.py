@@ -55,7 +55,6 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     gas = np.zeros((nGas, nAtm))
     nCloud = atm.cloud.shape[0]
     cloud = np.zeros((nCloud, nAtm))
-    atm.computeProp(False)  # We need to do this to interpolate/extrapolate along the adiabat
 
     # ## Interpolate gas onto the grid
     fillval = -999.9
@@ -63,6 +62,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
 
     # ## Extrapolate gas if needed
     if fillval in gas:
+        atm.computeProp(False)
         gas = extrapolate(gas, fillval, atm)
     atm.gas = gas
 
@@ -101,120 +101,78 @@ def interpolate(gctype, gas_or_cloud, fillval, atm, Pgrid):
     # ## Interpolate gas/cloud onto the grid - currently both linear
     berr = False
     interpType = 'linear'
-    use_lapse_hydro = False  # This will use adiabat and hydrostatic for T and Z
 
     if gctype == 'gas':
         ind = atm.config.C
         atm_gc = atm.gas
-        Pinput = atm_gc[ind['P']]
-        if use_lapse_hydro:
-            fv = interp1d(Pinput, atm.layerProperty[atm.config.LP['LAPSEP']], kind=interpType, fill_value=0.0, bounds_error=False)
-            S = {}
-            S['T'] = fv(Pgrid)  # Lapse rate
-            fv = interp1d(Pinput, atm.layerProperty[atm.config.LP['H']], kind=interpType, fill_value=0.0, bounds_error=False)
-            S['Z'] = fv(Pgrid) / Pgrid  # H/P
-            dP = []
-            xvar = {}
-            xvar['Z'] = []
-            xvar['T'] = []
-            for p in Pgrid:
-                for i, Ptrial in enumerate(Pinput):
-                    if Ptrial > p:
-                        break
-                dP.append(Ptrial - p)
-                xvar['Z'].append(atm.gas[atm.config.C['Z']][i])
-                xvar['T'].append(atm.gas[atm.config.C['T']][i])
-            dP = np.array(dP)
-            testing = {}
     else:
         ind = atm.config.Cl
         atm_gc = atm.cloud
-        Pinput = atm_gc[ind['P']]
+    Pinput = atm_gc[ind['P']]
 
     gas_or_cloud[ind['P']] = Pgrid
     for yvar in ind:
         if yvar in ['P', 'DZ']:
             continue
-        if use_lapse_hydro and gctype == 'gas' and yvar in ['Z', 'T']:
-            testing[yvar] = xvar[yvar] + dP * S[yvar]
-            #gas_or_cloud[ind[yvar]] = xvar[yvar] + dP * S[yvar]
-            #continue
         fv = interp1d(Pinput, atm_gc[ind[yvar]], kind=interpType, fill_value=fillval, bounds_error=berr)
         gas_or_cloud[ind[yvar]] = fv(Pgrid)
-
-    if gctype == 'gas' and use_lapse_hydro:
-        print("use_lapse_hydro does not work well and linear works really well")
-        atmosphere.plt.figure("NEWZ")
-        atmosphere.plt.plot(Pinput, atm_gc[ind['Z']], 'r.')
-        atmosphere.plt.plot(Pgrid, testing['Z'], 'b+')
-        atmosphere.plt.plot(Pgrid, gas_or_cloud[ind['Z']], 'gx')
-        atmosphere.plt.figure("NEWT")
-        atmosphere.plt.plot(Pinput, atm_gc[ind['T']], 'r.')
-        atmosphere.plt.plot(Pgrid, testing['T'], 'b+')
-        atmosphere.plt.plot(Pgrid, gas_or_cloud[ind['T']], 'gx')
 
     return gas_or_cloud
 
 
 def extrapolate(gas, fillval, atm):
     """First extrapolate in, then the rest of the fillvals get extrapolated out"""
-    Pmin = min(atm.gas[atm.config.C['P']])
-    Pmax = max(atm.gas[atm.config.C['P']])
     # extrapolate constituents in as fixed mixing ratios
     for yvar in atm.config.C:
         if yvar in ['Z', 'P', 'T', 'DZ']:
             continue
         val = atm.gas[atm.config.C[yvar]][-1]
-        for i, P in enumerate(gas[atm.config.C['P']]):
-            if P > Pmax:
+        for i, V in enumerate(gas[atm.config.C[yvar]]):
+            if V == fillval:
                 gas[atm.config.C[yvar]][i] = val
     # extrapolate T and z as dry adiabat in hydrostatic equilibrium
-    gDeep = atm.layerProperty[atm.config.LP['g']][-1]
-    pDeep = atm.layerProperty[atm.config.LP['P']][-1]
-    rDeep = atm.layerProperty[atm.config.LP['R']][-1]
-    for i, P in enumerate(gas[atm.config.C['P']]):
-        if P > Pmax:
-            dP = P - gas[atm.config.C['P']][i - 1]
-            P = gas[atm.config.C['P']][i - 1]
-            T = gas[atm.config.C['T']][i - 1]
-            amu = 0.0
-            cp = 0.0
-            for key in atm.chem:
-                cp += atm.chem[key].specific_heat * gas[atm.config.C[key]][i]
-                amu += atm.chem[key].amu * gas[atm.config.C[key]][i]
-            cp *= chemistry.R  # since the catalogued values are Cp/R
-            dT = (chemistry.R * T) / (cp * P) * dP
-            gas[atm.config.C['T']][i] = T + dT
+    pDeep = atm.gas[atm.config.C['P']][-1]
+    g = atm.layerProperty[atm.config.LP['g']][-1]
+    r = atm.layerProperty[atm.config.LP['R']][-1]
+    for i, p in enumerate(gas[atm.config.C['P']]):
+        if p < pDeep:
+            continue
+        prev = gas[atm.config.C['P']][i - 1]
+        dP = p - prev
+        T = gas[atm.config.C['T']][i - 1]
+        z = gas[atm.config.C['Z']][i - 1]
+        amu = 0.0
+        cp = 0.0
+        for key in atm.chem:
+            cp += atm.chem[key].cp * gas[atm.config.C[key]][i]
+            amu += atm.chem[key].amu * gas[atm.config.C[key]][i]
+        dT = T / (cp * p) * dP
+        gas[atm.config.C['T']][i] = T + dT
 
-            g = gDeep + 2.0 * chemistry.R * T * np.log(P / pDeep) / (rDeep * amu) / 1000.0
-            H = chemistry.R * T / (amu * g) / 1000.0
-            dz = H * dP / P
-            gas[atm.config.C['Z']][i] = gas[atm.config.C['Z']][i - 1] - dz
-    return gas
+        g = g + 2.0 * chemistry.R * T * np.log(p / prev) / (r * amu) / 1000.0
+        H = chemistry.R * T / (amu * g) / 1000.0
+        dz = H * dP / p
+        r = r - dz
+        gas[atm.config.C['Z']][i] = z - dz
 
     # extrapolate out along last slope (move return gas above if you think you want this)
     if fillval in gas:
         for yvar in atm.config.C:
             if yvar in ['P', 'DZ']:
                 continue
-            gas[atm.config.C[yvar]] = extrapolateOut(gas[atm.config.C['P']], gas[atm.config.C[yvar]], fillval)
+            gas[atm.config.C[yvar]] = extrapolate_outward(gas[atm.config.C['P']], gas[atm.config.C[yvar]], fillval)
 
     return gas
 
 
-def extrapolateOut(x, y, fillval):
-    if y[0] == fillval:
-        slope = (y[b[0] + 1] - y[b[0]]) / (x[b[0] + 1] - x[b[0]])
-        intercept = y[b[0]] - slope * x[b[0]]
-        i = 0
-        while y[i] == fillval:
-            y[i] = slope * x[i] + intercept
-            i += 1
-    if y[-1] == fillval:
-        slope = (y[b[-1]] - y[b[-1] - 1]) / (x[b[-1]] - x[b[-1] - 1])
-        intercept = y[b[-1]] - slope * x[b[-1]]
-        i = -1
-        while y[i] == fillval:
-            y[i] = slope * x[i] + intercept
-            i -= 1
+def extrapolate_outward(x, y, fillval):
+    for i in range(len(y)):
+        if y[i] != fillval:
+            break
+    slope = (y[i + 1] - y[i]) / (x[i + 1] - x[i])
+    intercept = y[i] - slope * x[i]
+    i = 0
+    while y[i] == fillval:
+        y[i] = slope * x[i] + intercept
+        i += 1
     return y
