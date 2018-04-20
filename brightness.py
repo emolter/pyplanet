@@ -25,6 +25,9 @@ class Brightness():
         self.layerAlpha = None
 
     def layerAbsorption(self, freqs, atm, alpha):
+        """
+        This is just a wrapper for __layerAbsorp__ for reasons I don't recall
+        """
         self.freqs = freqs
         self.layerAlpha = self.__layerAbsorp__(freqs, atm, alpha)
         if self.plot:
@@ -156,7 +159,7 @@ class Brightness():
                 else:
                     wplot = self.W[i]
                 label = (r'{:.1f} GHz').format(f)
-                #label = (r'{:.1f} cm').format(30.0 / f)
+                # label = (r'{:.1f} cm').format(30.0 / f)
                 if len(wplot) == len(self.P):
                     plt.semilogy(wplot, self.P, label=label, linewidth=3)
                 else:

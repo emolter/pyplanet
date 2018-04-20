@@ -41,14 +41,9 @@ class Planet:
         self.imSize = None
 
         print('Planetary modeling  (ver {})\n'.format(version))
-        if 'ddeboer' in os.getcwd():
-            print("\nDIAGNOSTICS/NOTES FOR DAVE")
-            print("PLANET.PY_L44:  In alpha, clouds_idp need otherPar['refr'] - still?")
-            s = 'Need to fix batch mode stuff'
-            print(s * 9)
-            print("\n\n")
 
         if self.planet not in planetList:
+            print("{} not found.".format(self.planet))
             return
 
         #  ##Set up log file
@@ -113,7 +108,6 @@ class Planet:
         #  ##Start
         runStart = datetime.datetime.now()
         self.Tb = []
-        hit_b = []
         btmp = ''
         self.rNorm = None
         self.tip = None
@@ -138,12 +132,6 @@ class Planet:
                     self.tip = self.bright.travel.tip
                 if self.rotate is None:
                     self.rotate = self.bright.travel.rotate
-            if Tbt is None:  # I've now done away with returning None by returning T_cmb in brightness.py (at least I thought so...)
-                Tbt = []
-                for i in range(len(freqs)):
-                    Tbt.append(utils.T_cmb)
-            else:            # ... so should always go to 'else'
-                hit_b.append(bv)
             if outType == 'Image':
                 imtmp.append(Tbt[0])
                 if not (i + 1) % self.imSize[0]:
@@ -161,7 +149,7 @@ class Planet:
         if self.verbose:
             print('\nWriting {} data to {}'.format(outType, datFile))
         self.__setHeader__(missed_planet)
-        self.fIO.write(outputFile, outType, freqs, freqUnit, hit_b, self.Tb, self.header)
+        self.fIO.write(outputFile, outType, freqs, freqUnit, b, self.Tb, self.header)
         if self.plot and outType == 'Profile':
             plt.figure("Profile")
             Tbtr = np.transpose(self.Tb)
