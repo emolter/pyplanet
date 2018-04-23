@@ -12,6 +12,7 @@ import brightness as bright
 import data_handling
 import utils
 import fileIO
+import state_variables
 import os
 
 version = '2.2'
@@ -23,7 +24,7 @@ class Planet:
            Inputs:
                 name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
-                mode:  '[normal]/batch/mcmc/generate_alpha_files'  sets up for various special modes
+                mode:  '[normal]/batch/mcmc/generate_alpha/use_alpha'  sets up for various special modes
                 kwargs: 'verbose' and 'plot' (and other state_vars - see show_state())"""
 
         planetList = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
@@ -41,10 +42,11 @@ class Planet:
             print("{} not found.".format(self.planet))
             return
 
-        # Set up 'mode' parameters - defaults are 'normal'
-        self.init_state_variables(mode.lower())
-        self.set_state(**kwargs)
-        self.show_state()
+        # Set up state_variables
+        kwargs = state_variables.init_state_variables(mode.lower(), **kwargs)
+        self.state_vars = kwargs.keys()
+        self.set_state(set_mode='init', **kwargs)
+        self.show_state('Planet')
 
         #  ##Set up log file
         if self.write_log_file:
@@ -65,7 +67,7 @@ class Planet:
         self.atm.run()
 
         #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
-        self.alpha = alpha.Alpha(config=self.config, log=self.log, verbose=self.verbose, plot=self.plot)
+        self.alpha = alpha.Alpha(config=self.config, log=self.log, **kwargs)
 
         #  ## Next compute radiometric properties - initialize bright and return data class
         self.bright = bright.Brightness(log=self.log, verbose=self.verbose, plot=self.plot)
@@ -163,39 +165,18 @@ class Planet:
 
         return self.data_return
 
-    def init_state_variables(self, mode):
-        self.state_vars = ['batch_mode', 'write_output_files', 'write_log_file', 'plot', 'verbose',
-                           'output_type']
-        #  defaults are 'normal'
-        self.batch_mode = False
-        self.write_output_files = True
-        self.write_log_file = True
-        self.plot = True
-        self.verbose = False
-        self.output_type = 'frequency'
-        if mode == 'batch':
-            self.batch_mode = True
-            self.plot = False
-            self.verbose = False
-            self.write_log_file = False
-        elif mode == 'mcmc':
-            self.plot = False
-            self.verbose = False
-            self.write_log_file = False
-            self.write_output_files = False
-        elif mode == 'generate_alpha_files':
-            self.write_output_files = False
-
-    def set_state(self, **kwargs):
+    def set_state(self, set_mode='set', **kwargs):
         for k, v in kwargs.iteritems():
             if k in self.state_vars:
                 setattr(self, k, v)
-                print('Setting {} to {}'.format(k, v))
+                if set_mode == 'set':
+                    print('Setting {} to {}'.format(k, v))
             else:
-                print('state_var [{}] not found.'.format(k))
+                if set_mode == 'set':
+                    print('state_var [{}] not found.'.format(k))
 
-    def show_state(self):
-        print("State variables")
+    def show_state(self, stype):
+        print("{} state variables".format(stype))
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
 

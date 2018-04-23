@@ -6,15 +6,19 @@ import numpy as np
 import prog_path
 import utils
 import config as pcfg
+import state_variables
 
 
 class Alpha:
-    def __init__(self, config=None, log=None, verbose=False, plot=False):
+    def __init__(self, config=None, log=None, **kwargs):
         """Reads in absorption formalisms
            Note that they are all in GHz"""
 
-        self.verbose = verbose
-        self.plot = plot
+        kwargs = state_variables.init_state_variables('normal', **kwargs)
+        self.state_vars = kwargs.keys()
+        self.set_state(set_mode='init', **kwargs)
+        if self.verbose:
+            self.show_state('Alpha')
         self.log = utils.setupLogFile(log)
 
         # get config
@@ -78,3 +82,18 @@ class Alpha:
         for i in range(len(freqs)):
             totalAbsorption[i] = absorb[i].sum()
         return totalAbsorption
+
+    def set_state(self, set_mode='set', **kwargs):
+        for k, v in kwargs.iteritems():
+            if k in self.state_vars:
+                setattr(self, k, v)
+                if set_mode == 'set':
+                    print('Setting {} to {}'.format(k, v))
+            else:
+                if set_mode == 'set':
+                    print('state_var [{}] not found.'.format(k))
+
+    def show_state(self, stype):
+        print("{} state variables".format(stype))
+        for k in self.state_vars:
+            print('\t{}:  {}'.format(k, getattr(self, k)))

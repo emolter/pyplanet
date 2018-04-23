@@ -9,15 +9,19 @@ import os.path
 import prog_path
 import utils
 import raypath as ray
+import state_variables
 
 
 class Brightness():
 
-    def __init__(self, log=None, verbose=False, plot=False):
+    def __init__(self, log=None, **kwargs):
         """This calculates the brightness temperature of the planets.
            It must be used with atmosphere and alpha"""
-        self.verbose = verbose
-        self.plot = plot
+        kwargs = state_variables.init_state_variables('normal', **kwargs)
+        self.state_vars = kwargs.keys()
+        self.set_state(set_mode='init', **kwargs)
+        if self.verbose:
+            self.show_state('Brightness')
         self.log = utils.setupLogFile(log)
         self.layerAlpha = None
 
@@ -60,6 +64,21 @@ class Brightness():
                             atm.config.Cl, units=utils.alphaUnit))
         layerAlp = np.array(layerAlp).transpose()
         return layerAlp
+
+    def set_state(self, set_mode='set', **kwargs):
+        for k, v in kwargs.iteritems():
+            if k in self.state_vars:
+                setattr(self, k, v)
+                if set_mode == 'set':
+                    print('Setting {} to {}'.format(k, v))
+            else:
+                if set_mode == 'set':
+                    print('state_var [{}] not found.'.format(k))
+
+    def show_state(self, stype):
+        print("{} state variables".format(stype))
+        for k in self.state_vars:
+            print('\t{}:  {}'.format(k, getattr(self, k)))
 
     def single(self, freqs, atm, b, alpha, orientation=None, taulimit=20.0, discAverage=False, normW4plot=True):
         """This computes the brightness temperature along one ray path"""
