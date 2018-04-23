@@ -15,7 +15,7 @@ import fileIO
 import state_variables
 import os
 
-version = '2.2'
+version = '2.3'
 
 
 class Planet:
@@ -63,7 +63,7 @@ class Planet:
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
-        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbose=self.verbose, plot=self.plot)
+        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, **kwargs)
         self.atm.run()
 
         #  ## Read in absorption modules:  to change absorption, edit files under /constituents'

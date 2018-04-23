@@ -12,22 +12,24 @@ import config as pcfg
 import raypath as ray
 import chemistry
 import regrid
+import state_variables
 
 
 class Atmosphere:
-    def __init__(self, planet, config='config.par', path=None, log=None, batch=False, verbose=False, plot=True):
+    def __init__(self, planet, config='config.par', log=None, **kwargs):
         """reads/computes atmospheres.  This returns:
                self.gas
                self.cloud
                self.layerProperty
             on the appropriate grid."""
 
-        planet = planet.capitalize()
-        self.planet = planet
-        self.verbose = verbose
-        self.plot = plot
+        self.planet = planet.capitalize()
+        kwargs = state_variables.init_state_variables('normal', **kwargs)
+        self.state_vars = kwargs.keys()
+        self.set_state(set_mode='init', **kwargs)
+        if self.verbose:
+            self.show_state('Atmosphere')
         self.logFile = utils.setupLogFile(log)
-        self.batch = batch
 
         print('\n---Atmosphere of {}---'.format(planet))
         if type(config) == str:
@@ -47,7 +49,7 @@ class Atmosphere:
             utils.log(self.logFile, '\tReading from: ' + self.config.filename, True)
             utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, True)
             utils.log(self.logFile, '\tCloud file:  ' + self.config.cloudFile, True)
-        if verbose:
+        if self.verbose:
             print(self.config.show())
 
     def run(self, Pmin=None, Pmax=None, regridType=None, gasType=None, cloudType=None, otherType=None, tweak=True):
@@ -74,7 +76,7 @@ class Atmosphere:
             self.gasGen[gasType](verbose=self.verbose)
         self.nAtm = len(self.gas[0])
 
-        if self.batch:
+        if self.batch_mode:
             return self.nAtm
 
         self.chem = {}
@@ -117,6 +119,21 @@ class Atmosphere:
 
         return self.nAtm
 
+    def set_state(self, set_mode='set', **kwargs):
+        for k, v in kwargs.iteritems():
+            if k in self.state_vars:
+                setattr(self, k, v)
+                if set_mode == 'set':
+                    print('Setting {} to {}'.format(k, v))
+            else:
+                if set_mode == 'set':
+                    print('state_var [{}] not found.'.format(k))
+
+    def show_state(self, stype):
+        print("{} state variables".format(stype))
+        for k in self.state_vars:
+            print('\t{}:  {}'.format(k, getattr(self, k)))
+
     def readGas(self, gasFile=None, Cdict=None, verbose=False):
         """Reads gas profile file as self.gas"""
 
@@ -125,10 +142,10 @@ class Atmosphere:
         if Cdict is None:
             Cdict = self.config.C
         if gasFile == 'batch':
-            self.batch = True
+            self.batch_mode = True
             return 0
         else:
-            self.batch = False
+            self.batch_mode = False
         gasFile = os.path.join(self.config.path, gasFile)
 
         print('Reading constituents from {}'.format(gasFile))
@@ -186,10 +203,10 @@ class Atmosphere:
         if Cldict is None:
             Cldict = self.config.Cl
         if cloudFile == 'batch':
-            self.batch = True
+            self.batch_mode = True
             return 0
         else:
-            self.batch = False
+            self.batch_mode = False
         cloudFile = os.path.join(self.config.path, cloudFile)
 
         print('Reading clouds from {}'.format(cloudFile))
@@ -255,7 +272,7 @@ class Atmosphere:
 
     def tweakAtm(self):
         """Tweaks the atmosphere data..."""
-        if self.batch:
+        if self.batch_mode:
             print('Defer tweaking')
             return 0
 
@@ -284,7 +301,7 @@ class Atmosphere:
 
     def computeProp(self, verbose=False):
         """This module computes derived atmospheric properties (makes self.layerProperty)"""
-        if self.batch:
+        if self.batch_mode:
             print('Defer computing properties')
             return 0
         nAtm = len(self.gas[self.config.C['P']])

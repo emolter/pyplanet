@@ -59,7 +59,7 @@ def d2r(a):
 
 
 def r2asec(a):
-    return 3600.0 * rad2deg(a)
+    return 3600.0 * r2d(a)
 
 
 def getRFband(freq, unit='GHz'):
