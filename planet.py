@@ -70,7 +70,7 @@ class Planet:
         self.alpha = alpha.Alpha(config=self.config, log=self.log, **kwargs)
 
         #  ## Next compute radiometric properties - initialize bright and return data class
-        self.bright = bright.Brightness(log=self.log, verbose=self.verbose, plot=self.plot)
+        self.bright = bright.Brightness(log=self.log, **kwargs)
         self.data_return = data_handling.DataReturn()
 
         # ## Create fileIO class
