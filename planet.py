@@ -18,21 +18,16 @@ version = '2.2'
 
 
 class Planet:
-    def __init__(self, name, config='planet', batch_mode=False, outputType='frequency', verbose=False, plot=True):
+    def __init__(self, name, config='planet', mode='normal', **kwargs):
         """This is the 'executive function class to compute overall planetary emission
            Inputs:
                 name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
-                batch_mode:  enable batch mode processing (ignores lots of stuff)
-                outputType:  'frequency', 'wavelength' or 'both'
-                verbose:  True/False
-                plot:  True/False"""
+                mode:  '[normal]/batch/mcmc/generate_alpha_files'  sets up for various special modes
+                kwargs: 'verbose' and 'plot' (and other state_vars - see show_state())"""
 
         planetList = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
         self.planet = name.capitalize()
-        self.batch_mode = batch_mode
-        self.plot = plot
-        self.verbose = verbose
         self.header = {}
         self.imrow = False
         self.freqs = None
@@ -46,11 +41,19 @@ class Planet:
             print("{} not found.".format(self.planet))
             return
 
+        # Set up 'mode' parameters - defaults are 'normal'
+        self.init_state_variables(mode.lower())
+        self.set_state(**kwargs)
+        self.show_state()
+
         #  ##Set up log file
-        runStart = datetime.datetime.now()
-        self.logFile = 'Logs/{}_{}.log'.format(self.planet, runStart.strftime("%Y%m%d_%H%M"))
-        self.log = utils.setupLogFile(self.logFile)
-        utils.log(self.log, self.planet + ' start ' + str(runStart), True)
+        if self.write_log_file:
+            runStart = datetime.datetime.now()
+            self.logFile = 'Logs/{}_{}.log'.format(self.planet, runStart.strftime("%Y%m%d_%H%M"))
+            self.log = utils.setupLogFile(self.logFile)
+            utils.log(self.log, self.planet + ' start ' + str(runStart), True)
+        else:
+            self.log = None
 
         #  ## Get config
         if config.lower() == 'planet':
@@ -58,20 +61,18 @@ class Planet:
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
-        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbose=verbose, plot=plot)
+        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, verbose=self.verbose, plot=self.plot)
         self.atm.run()
-        self.log.flush()
 
         #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
-        self.alpha = alpha.Alpha(config=self.config, log=self.log, verbose=verbose, plot=plot)
-        self.log.flush()
+        self.alpha = alpha.Alpha(config=self.config, log=self.log, verbose=self.verbose, plot=self.plot)
 
         #  ## Next compute radiometric properties - initialize bright and return data class
-        self.bright = bright.Brightness(log=self.log, verbose=verbose, plot=plot)
+        self.bright = bright.Brightness(log=self.log, verbose=self.verbose, plot=self.plot)
         self.data_return = data_handling.DataReturn()
 
         # ## Create fileIO class
-        self.fIO = fileIO.FileIO(outputType)
+        self.fIO = fileIO.FileIO(self.output_type)
 
     def run(self, freqs='reuse', b=[0.0, 0.0], freqUnit='GHz', block=[1, 1], orientation=None):
         """Runs the model to produce the brightness temperature, weighting functions etc etc
@@ -139,28 +140,64 @@ class Planet:
                     imtmp = []
             else:
                 self.Tb.append(Tbt)
-        self.log.flush()
         self.data_return.Tb = self.Tb
         self.data_return.header = self.header
         missed_planet = self.rNorm is None
 
         #  ##Write output files
-        outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
-        if self.verbose:
-            print('\nWriting {} data to {}'.format(outType, datFile))
-        self.__setHeader__(missed_planet)
-        self.fIO.write(outputFile, outType, freqs, freqUnit, b, self.Tb, self.header)
-        if self.plot and outType == 'Profile':
-            plt.figure("Profile")
-            Tbtr = np.transpose(self.Tb)
-            for j in range(len(freqs)):
-                frqs = ('%.2f %s' % (self.freqs[j], self.freqUnit))
-                plt.plot(bs, Tbtr[j], label=frqs)
-            plt.legend()
-            plt.xlabel('b')
-            plt.ylabel('$T_B$ [K]')
+        if self.write_output_files:
+            outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
+            if self.verbose:
+                print('\nWriting {} data to {}'.format(outType, datFile))
+            self.__setHeader__(missed_planet)
+            self.fIO.write(outputFile, outType, freqs, freqUnit, b, self.Tb, self.header)
+            if self.plot and outType == 'Profile':
+                plt.figure("Profile")
+                Tbtr = np.transpose(self.Tb)
+                for j in range(len(freqs)):
+                    frqs = ('%.2f %s' % (self.freqs[j], self.freqUnit))
+                    plt.plot(bs, Tbtr[j], label=frqs)
+                plt.legend()
+                plt.xlabel('b')
+                plt.ylabel('$T_B$ [K]')
 
         return self.data_return
+
+    def init_state_variables(self, mode):
+        self.state_vars = ['batch_mode', 'write_output_files', 'write_log_file', 'plot', 'verbose',
+                           'output_type']
+        #  defaults are 'normal'
+        self.batch_mode = False
+        self.write_output_files = True
+        self.write_log_file = True
+        self.plot = True
+        self.verbose = False
+        self.output_type = 'frequency'
+        if mode == 'batch':
+            self.batch_mode = True
+            self.plot = False
+            self.verbose = False
+            self.write_log_file = False
+        elif mode == 'mcmc':
+            self.plot = False
+            self.verbose = False
+            self.write_log_file = False
+            self.write_output_files = False
+        elif mode == 'generate_alpha_files':
+            self.write_output_files = False
+
+    def set_state(self, **kwargs):
+        for k, v in kwargs.iteritems():
+            if k in self.state_vars:
+                setattr(self, k, v)
+                print('Setting {} to {}'.format(k, v))
+            else:
+                print('state_var [{}] not found.'.format(k))
+
+    def show_state(self):
+        print("State variables")
+        for k in self.state_vars:
+            print('\t{}:  {}'.format(k, getattr(self, k)))
 
     def __setHeader__(self, missed_planet):
         if missed_planet:

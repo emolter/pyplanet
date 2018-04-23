@@ -98,7 +98,8 @@ def log(logfp, msg, printOut=True):
 
 
 def close(logfp):
-    logfp.close()
+    if logfp:
+        logfp.close()
 
 
 def ls(directory='Output', show=True, returnList=False):
