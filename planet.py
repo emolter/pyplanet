@@ -96,6 +96,8 @@ class Planet:
         else:
             freqs, freqUnit = self.set_freq(freqs, freqUnit)
             self.bright.resetLayers()
+        if self.use_existing_alpha:
+            print("Double-check that frequencies are the same.")
         self.data_return.f = freqs
 
         #  ##Set b, etc

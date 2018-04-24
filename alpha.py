@@ -61,7 +61,7 @@ class Alpha:
         os.remove('Scratch/absorb.dat')
 
     def read_existing_alpha(self):
-        print("Reading in data...")
+        self.alpha_data = np.load('Scratch/absorb.npy')
 
     def formalisms(self):
         # Get possible constituents
@@ -103,7 +103,10 @@ class Alpha:
             return self.get_alpha_from_calc(freqs, T, P, gas, atm.config.C, cloud, atm.config.Cl, units, plot)
 
     def get_alpha_from_file(self, freqs, layer, units='invcm', plot=None):
-        print("NOT YET")
+        totalAbsorption = np.zeros_like(freqs)
+        for i in range(len(freqs)):
+            totalAbsorption[i] = self.alpha_data[layer, i, -1]
+        return totalAbsorption
 
     def get_alpha_from_calc(self, freqs, T, P, gas, gas_dict, cloud, cloud_dict, units='invcm', plot=None):
         """This gets the total absoprtion coefficient from gas.  It assumes the correct frequency units, but maybe should correct that.
