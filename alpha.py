@@ -36,7 +36,32 @@ class Alpha:
         self.otherPar['nh3ice'] = self.config.nh3ice_p
         self.otherPar['h2sice'] = self.config.h2sice_p
         self.otherPar['ch4'] = self.config.ch4_p
-        self.formalisms()
+        if self.use_existing_alpha:
+            self.read_existing_alpha()
+        else:
+            self.formalisms()
+        if self.generate_alpha:
+            np.savez('Scratch/constituents', alpha_dict=self.config.constituent_alpha, alpha_sort=self.ordered_constituents)
+            self.fp_gen_alpha = open('Scratch/absorb.dat', 'w')
+
+    def complete_generate_alpha(self, n_freq, n_layer):
+        self.fp_gen_alpha.close()
+        data = []
+        with open('Scratch/absorb.dat', 'r') as fp:
+            for i, line in enumerate(fp):
+                if not i % n_freq:
+                    if i:
+                        data.append(layer)
+                    layer = []
+                v = [float(x) for x in line.split()]
+                layer.append(v)
+            data.append(layer)
+        data = np.array(data)
+        np.save('Scratch/absorb', data)
+        os.remove('Scratch/absorb.dat')
+
+    def read_existing_alpha(self):
+        print("Reading in data...")
 
     def formalisms(self):
         # Get possible constituents
@@ -60,14 +85,31 @@ class Alpha:
                 s = "WARNING:  CAN'T LOAD " + absorber + '\n'
                 print(s * 3)
                 utils.log(self.log, "Can't load " + absorber, True)
+        self.ordered_constituents = sorted(self.constituent.keys())
         utils.log(self.log, 'Using modules:', True)
         for k in self.constituent:
             utils.log(self.log, '\t' + k + ':  ' + self.constituent[k], True)
 
-    def getAlpha(self, freqs, T, P, gas, gas_dict, cloud, cloud_dict, units='invcm', plot=None):
-        """This gets the total absoprtion coefficient from gas.  It assumes the correct frequency units, but maybe should correct that."""
+    def getAlpha(self, freqs, layer, atm, units='invcm', plot=None):
+        """This is a wrapper to get the absorption coefficient, either from calculating from formalisms
+           or reading from file"""
+        if self.use_existing_alpha:
+            return self.get_alpha_from_file(freqs, layer, units, plot)
+        else:
+            P = atm.gas[atm.config.C['P']][layer]
+            T = atm.gas[atm.config.C['T']][layer]
+            gas = atm.gas[:, layer]
+            cloud = atm.cloud[:, layer]
+            return self.get_alpha_from_calc(freqs, T, P, gas, atm.config.C, cloud, atm.config.Cl, units, plot)
+
+    def get_alpha_from_file(self, freqs, layer, units='invcm', plot=None):
+        print("NOT YET")
+
+    def get_alpha_from_calc(self, freqs, T, P, gas, gas_dict, cloud, cloud_dict, units='invcm', plot=None):
+        """This gets the total absoprtion coefficient from gas.  It assumes the correct frequency units, but maybe should correct that.
+           Returns total absorption at that layer."""
         absorb = []
-        for k in self.constituent:
+        for k in self.ordered_constituents:
             path = os.path.join(self.constituentsAreAt, k)
             if k[0:4].lower() == 'clou':
                 X = cloud
@@ -81,7 +123,17 @@ class Alpha:
         totalAbsorption = np.zeros_like(freqs)
         for i in range(len(freqs)):
             totalAbsorption[i] = absorb[i].sum()
+        if self.generate_alpha:
+            self.write_layer(absorb, totalAbsorption)
         return totalAbsorption
+
+    def write_layer(self, absorb, totalAbsorption):
+        for i in range(len(absorb)):
+            s = ''
+            for a2 in absorb[i]:
+                s += '{} '.format(a2)
+            s += '{}\n'.format(totalAbsorption[i])
+            self.fp_gen_alpha.write(s)
 
     def set_state(self, set_mode='set', **kwargs):
         for k, v in kwargs.iteritems():

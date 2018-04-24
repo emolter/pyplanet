@@ -53,15 +53,12 @@ class Brightness():
     def __layerAbsorp__(self, freqs, atm, alpha):
         numLayers = len(atm.gas[0])
         layerAlp = []
-        P = atm.gas[atm.config.C['P']]
-        T = atm.gas[atm.config.C['T']]
         utils.log(self.log, '{} layers'.format(numLayers), True)
         for layer in range(numLayers):
             if self.verbose:
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
                 sys.stdout.flush()
-            layerAlp.append(alpha.getAlpha(freqs, T[layer], P[layer], atm.gas[:, layer], atm.config.C, atm.cloud[:, layer],
-                            atm.config.Cl, units=utils.alphaUnit))
+            layerAlp.append(alpha.getAlpha(freqs, layer, atm, units=utils.alphaUnit))
         layerAlp = np.array(layerAlp).transpose()
         return layerAlp
 
@@ -126,6 +123,7 @@ class Brightness():
                     a1 = self.layerAlpha[j][ii1]
                     a0 = self.layerAlpha[j][ii]
                 else:
+                    print("\n\nDoppler currently broken since the getAlpha call is different.")
                     fshifted = [[f / travel.doppler[i]], [f / travel.doppler[i + 1]]]
                     print('\rdoppler corrected frequency at layer', i, end='')
                     a1 = alpha.getAlpha(fshifted[0], T_layers[ii1], P_layers[ii1], atm.gas[:, ii1], atm.config.C, atm.cloud[:, ii1],

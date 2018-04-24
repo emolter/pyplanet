@@ -20,7 +20,8 @@ version = '2.3'
 
 class Planet:
     def __init__(self, name, config='planet', mode='normal', **kwargs):
-        """This is the 'executive function class to compute overall planetary emission
+        """This is the 'executive function class to compute overall planetary emission.
+           For both mode and kwargs look at state_variables.py
            Inputs:
                 name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
@@ -145,6 +146,10 @@ class Planet:
         self.data_return.Tb = self.Tb
         self.data_return.header = self.header
         missed_planet = self.rNorm is None
+
+        if self.generate_alpha:
+            self.alpha.complete_generate_alpha(len(freqs), self.atm.nAtm)
+            np.save('Scratch/freqs', freqs)
 
         #  ##Write output files
         if self.write_output_files:

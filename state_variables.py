@@ -8,7 +8,7 @@ def init_state_variables(mode, **kwargs):
                   'plot': True,
                   'verbose': False,
                   'generate_alpha': False,
-                  'use_alpha': False,
+                  'use_existing_alpha': False,
                   'output_type': 'frequency'
                   }
 
@@ -22,10 +22,12 @@ def init_state_variables(mode, **kwargs):
         state_vars['verbose'] = False
         state_vars['write_log_file'] = False
         state_vars['write_output_files'] = False
-        state_vars['use_alpha'] = True
+        state_vars['use_existing_alpha'] = True
     elif mode == 'generate_alpha':
         state_vars['write_output_files'] = False
         state_vars['generate_alpha'] = True
+    elif mode == 'use_alpha':
+        state_vars['use_existing_alpha'] = True
 
     # update based on provided kwargs
     for k in kwargs:
