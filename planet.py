@@ -37,7 +37,7 @@ class Planet:
         self.b = None
         self.imSize = None
 
-        print('Planetary modeling  (ver {})\n'.format(version))
+        print('Planetary modeling  (ver {})'.format(version))
 
         if self.planet not in planetList:
             print("{} not found.".format(self.planet))
