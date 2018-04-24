@@ -44,4 +44,7 @@ def init_state_variables(mode, **kwargs):
         if k in state_vars.keys():
             state_vars[k] = kwargs[k]
 
+    if state_vars['super_quiet']:
+        state_vars['verbose'] = False
+
     return state_vars

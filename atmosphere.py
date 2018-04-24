@@ -169,7 +169,8 @@ class Atmosphere:
         except IOError:
             print(gasFile + ' was not found - returning no gas profile\n\n')
             raise IOError
-        print(' ')
+        if not self.super_quiet:
+            print(' ')
         expected_number = utils.get_expected_number_of_entries(fp)
         for line in fp:
             cval = utils.get_data_from(line)
@@ -288,7 +289,6 @@ class Atmosphere:
     def tweakAtm(self):
         """Tweaks the atmosphere data..."""
         if self.batch_mode:
-            print('Defer tweaking')
             return 0
 
         # Import tweakFile
@@ -318,7 +318,6 @@ class Atmosphere:
     def computeProp(self, verbose=False):
         """This module computes derived atmospheric properties (makes self.layerProperty)"""
         if self.batch_mode:
-            print('Defer computing properties')
             return 0
         nAtm = len(self.gas[self.config.C['P']])
         self.layerProperty = []
