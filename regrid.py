@@ -7,7 +7,7 @@ import atmosphere
 import chemistry
 
 
-def regrid(atm, regridType=None, Pmin=None, Pmax=None):
+def regrid(atm, regridType=None, Pmin=None, Pmax=None, verbose=False):
     """This puts atm and cloud on the same grid used later for calculations.  It has three different regimes:
         1 - interpolating within given points:  currently linear -- moving to: P,T,z are assumed to follow given adiabat
         2 - extrapolating outward:  project last slope out for everything
@@ -22,7 +22,6 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
                     where 'number' is number of steps within range (int)
     """
 
-    verbose = False
     # set regridType/regrid
     if regridType is None:
         regridType = atm.config.regridType
@@ -45,8 +44,6 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     if isinstance(regridType, int):
         regrid_numsteps = regridType
         Pgrid = np.logspace(np.log10(Pmin), np.log10(Pmax), regrid_numsteps)
-        if verbose:
-            print('Regridding on {} steps'.format(regrid_numsteps))
     Pmin = min(Pgrid)
     Pmax = max(Pgrid)
     # ## Copy over for new array size
@@ -77,7 +74,6 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     atm.renorm_z('gas')
     atm.renorm_z('cloud')
 
-    print('Regrid:  {} levels'.format(nAtm))
     return 1
 
 

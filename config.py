@@ -43,7 +43,7 @@ class planetConfig:
         pars = self.show()
         utils.log(self.logFile, planet, False)
         utils.log(self.logFile, configFile, False)
-        utils.log(self.logFile, pars, True)
+        utils.log(self.logFile, pars, False)
 
     def setConfig(self, configFile):
         """Reads in config files and updates after default set in __init__.  These are all shown in showConfig"""
@@ -55,7 +55,6 @@ class planetConfig:
         except IOError:
             print(configFile, ' not found.  Using defaults.')
             return 0
-        print('Reading ', configFile)
 
         for line in fp:
             if line[0] in utils.commentChars or len(line) < 4:

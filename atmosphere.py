@@ -29,9 +29,10 @@ class Atmosphere:
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:
             self.show_state('Atmosphere')
-        self.logFile = utils.setupLogFile(log)
+        self.logFile = utils.setupLogFile(log, not self.super_quiet)
 
-        print('\n---Atmosphere of {}---'.format(planet))
+        if not self.super_quiet:
+            print('\n---Atmosphere of {}---'.format(planet))
         if type(config) == str:
             if config.lower() == 'planet':
                 config = self.planet + '/config.par'
@@ -46,11 +47,12 @@ class Atmosphere:
         self.propGen = {}
         self.propGen['compute'] = self.computeProp
 
-        print('Planet ' + self.planet)
+        if not self.super_quiet:
+            print('Planet ' + self.planet)
         if self.config.gasType == 'read':  # this assumes that cloudType is then also 'read'
-            utils.log(self.logFile, '\tReading from: ' + self.config.filename, True)
-            utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, True)
-            utils.log(self.logFile, '\tCloud file:  ' + self.config.cloudFile, True)
+            utils.log(self.logFile, '\tReading from: ' + self.config.filename, not self.super_quiet)
+            utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, not self.super_quiet)
+            utils.log(self.logFile, '\tCloud file:  ' + self.config.cloudFile, not self.super_quiet)
         if self.verbose:
             print(self.config.show())
 
@@ -95,6 +97,8 @@ class Atmosphere:
             self.cloudGen[cloudType](verbose=self.verbose)
 
         # ## Put onto common grid
+        if not self.super_quiet:
+            print("Regrid:  {}".format(regridType))
         regridded = regrid.regrid(self, regridType=regridType, Pmin=Pmin, Pmax=Pmax)
         self.nAtm = len(self.gas[0])
 
@@ -150,11 +154,14 @@ class Atmosphere:
             self.batch_mode = False
         gasFile = os.path.join(self.config.path, gasFile)
 
-        print('Reading constituents from {}'.format(gasFile))
+        if not self.super_quiet:
+            print('Reading constituents from {}'.format(gasFile))
         self.gas = []
-        print('\tUsing atmsopheric component:  ', end='')
+        if not self.super_quiet:
+            print('\tUsing atmsopheric component:  ', end='')
         for k in Cdict:
-            print(k + '  ', end='')
+            if not self.super_quiet:
+                print(k + '  ', end='')
             self.gas.append([])
         self.nConstituent = len(Cdict)
         try:
@@ -181,7 +188,8 @@ class Atmosphere:
             Cdict[nid[k]] = i
         self.config.C = Cdict
 
-        print('\tRead ' + str(self.nGas) + ' lines')
+        if not self.super_quiet:
+            print('\tRead ' + str(self.nGas) + ' lines')
         fp.close()
         self.gas = np.array(self.gas)
         # ## Check that P is monotonically increasing
@@ -211,11 +219,14 @@ class Atmosphere:
             self.batch_mode = False
         cloudFile = os.path.join(self.config.path, cloudFile)
 
-        print('Reading clouds from {}'.format(cloudFile))
+        if not self.super_quiet:
+            print('Reading clouds from {}'.format(cloudFile))
         self.cloud = []
-        print('\tUsing cloud components:  ', end='')
+        if not self.super_quiet:
+            print('\tUsing cloud components:  ', end='')
         for k in Cldict:
-            print(k, '  ', end='')
+            if not self.super_quiet:
+                print(k, '  ', end='')
             self.cloud.append([])
         self.nParticulate = len(Cldict.keys())
         try:
@@ -223,7 +234,8 @@ class Atmosphere:
         except IOError:
             print(cloudFile, ' was not found - returning no clouds\n\n')
             raise IOError
-        print(' ')
+        if not self.super_quiet:
+            print(' ')
         expected_number = utils.get_expected_number_of_entries(fp)
         for line in fp:
             cval = utils.get_data_from(line)
@@ -241,7 +253,8 @@ class Atmosphere:
             Cldict[nid[k]] = i
         self.config.Cl = Cldict
 
-        print('\tRead ', str(self.nCloud), ' lines')
+        if not self.super_quiet:
+            print('\tRead ', str(self.nCloud), ' lines')
         fp.close()
         self.cloud = np.array(self.cloud)
         # ## Check that P is monotonically increasing
@@ -289,9 +302,10 @@ class Atmosphere:
 
         # Run module then log
         self.tweakComment, self.gas, self.cloud = tweakModule.modify(self.gas, self.cloud, self.config.C, self.config.Cl)
-        print('---tweakComment')
-        print(self.tweakComment)
-        print('---')
+        if not self.super_quiet:
+            print('---tweakComment')
+            print(self.tweakComment)
+            print('---')
         utils.log(self.logFile, self.tweakComment, False)
         _tf = os.path.join(self.config.path, self.config.tweakFile + '.py')
         _tp = open(_tf, 'r')

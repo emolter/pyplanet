@@ -53,7 +53,7 @@ class Brightness():
     def __layerAbsorp__(self, freqs, atm, alpha):
         numLayers = len(atm.gas[0])
         layerAlp = []
-        utils.log(self.log, '{} layers'.format(numLayers), True)
+        utils.log(self.log, '{} layers'.format(numLayers), not self.super_quiet)
         for layer in range(numLayers):
             if self.verbose:
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')

@@ -7,12 +7,12 @@ def init_state_variables(mode, **kwargs):
                   'write_log_file': True,
                   'plot': True,
                   'verbose': False,
+                  'super_quiet': False,
                   'generate_alpha': False,
                   'use_existing_alpha': False,
                   'scale_existing_alpha': False,
                   'scale_file_name': None,
-                  'output_type': 'frequency',
-                  'super_quiet': False
+                  'output_type': 'frequency'
                   }
 
     if mode == 'batch':

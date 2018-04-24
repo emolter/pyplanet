@@ -79,12 +79,13 @@ def invertDictionary(dic):
     return e, sk
 
 
-def setupLogFile(log):
+def setupLogFile(log, printOut=True):
     if type(log) == file:
         logfp = log
     elif type(log) == str:
         logfp = open(log, 'a')
-        print('setup Log:  Logging to ', log)
+        if printOut:
+            print('setup Log:  Logging to ', log)
     else:
         logfp = None
     return logfp

@@ -98,9 +98,9 @@ class Alpha:
                 print(s * 3)
                 utils.log(self.log, "Can't load " + absorber, True)
         self.ordered_constituents = sorted(self.constituent.keys())
-        utils.log(self.log, 'Using modules:', True)
+        utils.log(self.log, 'Using modules:', not self.super_quiet)
         for k in self.constituent:
-            utils.log(self.log, '\t' + k + ':  ' + self.constituent[k], True)
+            utils.log(self.log, '\t' + k + ':  ' + self.constituent[k], not self.super_quiet)
 
     def getAlpha(self, freqs, layer, atm, units='invcm', plot=None):
         """This is a wrapper to get the absorption coefficient, either from calculating from formalisms

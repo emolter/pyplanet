@@ -47,20 +47,24 @@ class Planet:
         kwargs = state_variables.init_state_variables(mode.lower(), **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
-        self.show_state('Planet')
+        if not self.super_quiet:
+            self.show_state('Planet')
 
         #  ##Set up log file
         if self.write_log_file:
             runStart = datetime.datetime.now()
             self.logFile = 'Logs/{}_{}.log'.format(self.planet, runStart.strftime("%Y%m%d_%H%M"))
-            self.log = utils.setupLogFile(self.logFile)
-            utils.log(self.log, self.planet + ' start ' + str(runStart), True)
+            self.log = utils.setupLogFile(self.logFile, not self.super_quiet)
+            utils.log(self.log, self.planet + ' start ' + str(runStart), not self.super_quiet)
         else:
             self.log = None
 
         #  ## Get config
         if config.lower() == 'planet':
             config = self.planet + '/config.par'
+        if not self.super_quiet:
+            print('Reading config file:  ', config)
+            print("\t'print(x.config.show())' to see config parameters (where x in the instance name, e.g. 'j').")
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
@@ -88,7 +92,8 @@ class Planet:
         #  ##Set freqs
         if self.use_existing_alpha or self.scale_existing_alpha:
             freqs = np.load('Scratch/freqs.npy')
-            print("Setting frequencies to ", freqs)
+            if not self.super_quiet:
+                print("Setting frequencies to ", freqs)
         reuse = False
         if freqs == 'reuse':
             if self.freqs is None:
@@ -355,7 +360,8 @@ class Planet:
             s = '{} in {} frequency steps ({} - {} {})'.format(self.planet, len(freqs), freqs[0], freqs[-1], utils.proc_unit(freqUnit))
         else:
             s = '{} at {} {}'.format(self.planet, freqs[0], utils.proc_unit(freqUnit))
-        utils.log(self.log, s, True)
+        if not self.super_quiet:
+            utils.log(self.log, s, True)
         self.freqs = freqs
         self.freqUnit = utils.proc_unit(freqUnit)
         return freqs, utils.proc_unit(freqUnit)
