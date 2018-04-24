@@ -91,11 +91,12 @@ class Planet:
 
         #  ##Set freqs
         if self.use_existing_alpha or self.scale_existing_alpha:
-            freqs = np.load('Scratch/freqs.npy')
+            freqs_read = np.load('Scratch/freqs.npy')
+            freqs = [f for f in freqs_read]
             if not self.super_quiet:
                 print("Setting frequencies to ", freqs)
         reuse = False
-        if freqs == 'reuse':
+        if isinstance(freqs, str) and freqs == 'reuse':
             if self.freqs is None:
                 raise ValueError('Must set frequencies.')
             reuse = True

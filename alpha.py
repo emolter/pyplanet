@@ -105,9 +105,14 @@ class Alpha:
     def getAlpha(self, freqs, layer, atm, units='invcm', plot=None):
         """This is a wrapper to get the absorption coefficient, either from calculating from formalisms
            or reading from file"""
+        if self.use_existing_alpha or self.scale_existing_alpha:
+            if len(self.alpha_data) != len(atm.gas[0]):
+                raise ValueError("Absorption and atmosphere don't agree")
         if self.use_existing_alpha:
             return self.get_alpha_from_file(freqs, layer, units, plot)
         elif self.scale_existing_alpha:
+            if len(self.scale_constituent_values) != len(atm.gas[0]):
+                raise ValueError("Scaling and atmosphere don't agree")
             return self.scale_alpha_from_file(freqs, layer, units, plot)
         else:
             P = atm.gas[atm.config.C['P']][layer]
