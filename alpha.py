@@ -36,8 +36,8 @@ class Alpha:
         self.otherPar['nh3ice'] = self.config.nh3ice_p
         self.otherPar['h2sice'] = self.config.h2sice_p
         self.otherPar['ch4'] = self.config.ch4_p
-        if self.use_existing_alpha:
-            self.read_existing_alpha()
+        if self.use_existing_alpha or self.scale_existing_alpha:
+            self.existing_alpha_setup()
         else:
             self.formalisms()
         if self.generate_alpha:
@@ -60,8 +60,20 @@ class Alpha:
         np.save('Scratch/absorb', data)
         os.remove('Scratch/absorb.dat')
 
-    def read_existing_alpha(self):
+    def existing_alpha_setup(self):
         self.alpha_data = np.load('Scratch/absorb.npy')
+        condata = np.load('Scratch/constituents.npz')
+        self.ordered_constituents = condata['alpha_sort']
+        if self.scale_existing_alpha:
+            with open(self.scale_file_name, 'r') as fp:
+                sch = fp.readline().strip('#').split()
+            self.scale_constituent_columns = [x.lower() for x in sch]
+            usecols = range(len(self.scale_constituent_columns))
+            if 'p' in self.scale_constituent_columns:
+                ignore_column = self.scale_constituent_columns.index('p')
+                del self.scale_constituent_columns[ignore_column]
+                del usecols[ignore_column]
+            self.scale_constituent_values = np.loadtxt(self.scale_file_name, usecols=usecols)
 
     def formalisms(self):
         # Get possible constituents
@@ -95,6 +107,8 @@ class Alpha:
            or reading from file"""
         if self.use_existing_alpha:
             return self.get_alpha_from_file(freqs, layer, units, plot)
+        elif self.scale_existing_alpha:
+            return self.scale_alpha_from_file(freqs, layer, units, plot)
         else:
             P = atm.gas[atm.config.C['P']][layer]
             T = atm.gas[atm.config.C['T']][layer]
@@ -106,6 +120,17 @@ class Alpha:
         totalAbsorption = np.zeros_like(freqs)
         for i in range(len(freqs)):
             totalAbsorption[i] = self.alpha_data[layer, i, -1]
+        return totalAbsorption
+
+    def scale_alpha_from_file(self, freqs, layer, units='invcm', plot=None):
+        totalAbsorption = np.zeros_like(freqs)
+        for i in range(len(freqs)):
+            for j in range(self.alpha_data.shape[2] - 1):
+                new_value = self.alpha_data[layer, i, j]
+                if self.ordered_constituents[j] in self.scale_constituent_columns:
+                    x = self.scale_constituent_columns.index(self.ordered_constituents[j])
+                    new_value *= self.scale_constituent_values[layer, x]
+                totalAbsorption[i] += new_value
         return totalAbsorption
 
     def get_alpha_from_calc(self, freqs, T, P, gas, gas_dict, cloud, cloud_dict, units='invcm', plot=None):

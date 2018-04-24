@@ -16,7 +16,7 @@ import state_variables
 
 
 class Atmosphere:
-    def __init__(self, planet, config='config.par', log=None, **kwargs):
+    def __init__(self, planet, config='planet', log=None, **kwargs):
         """reads/computes atmospheres.  This returns:
                self.gas
                self.cloud
@@ -33,6 +33,8 @@ class Atmosphere:
 
         print('\n---Atmosphere of {}---'.format(planet))
         if type(config) == str:
+            if config.lower() == 'planet':
+                config = self.planet + '/config.par'
             config = pcfg.planetConfig(self.planet, configFile=config, log=log)
         self.config = config
 

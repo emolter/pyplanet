@@ -19,7 +19,7 @@ version = '2.3'
 
 
 class Planet:
-    def __init__(self, name, config='planet', mode='normal', **kwargs):
+    def __init__(self, name, mode='normal', config='planet', **kwargs):
         """This is the 'executive function class to compute overall planetary emission.
            For both mode and kwargs look at state_variables.py
            Inputs:
@@ -97,7 +97,7 @@ class Planet:
             freqs, freqUnit = self.set_freq(freqs, freqUnit)
             self.bright.resetLayers()
         if self.use_existing_alpha:
-            print("Double-check that frequencies are the same.")
+            print("Double-check that frequencies are the same.\n" * 5)
         self.data_return.f = freqs
 
         #  ##Set b, etc
