@@ -45,6 +45,7 @@ def init_state_variables(mode, **kwargs):
             state_vars[k] = kwargs[k]
         else:
             print("{} keyword not found.".format(k))
+            raise ValueError("Aborting since you probably wanted this keyword")
 
     if state_vars['super_quiet']:
         state_vars['verbose'] = False
