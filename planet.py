@@ -86,6 +86,9 @@ class Planet:
             orientation:  orientation vector of planet"""
 
         #  ##Set freqs
+        if self.use_existing_alpha or self.scale_existing_alpha:
+            freqs = np.load('Scratch/freqs.npy')
+            print("Setting frequencies to ", freqs)
         reuse = False
         if freqs == 'reuse':
             if self.freqs is None:
@@ -96,8 +99,6 @@ class Planet:
         else:
             freqs, freqUnit = self.set_freq(freqs, freqUnit)
             self.bright.resetLayers()
-        if self.use_existing_alpha:
-            print("Double-check that frequencies are the same.\n" * 5 )
         self.data_return.f = freqs
 
         #  ##Set b, etc
