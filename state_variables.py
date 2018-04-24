@@ -11,17 +11,20 @@ def init_state_variables(mode, **kwargs):
                   'use_existing_alpha': False,
                   'scale_existing_alpha': False,
                   'scale_file_name': None,
-                  'output_type': 'frequency'
+                  'output_type': 'frequency',
+                  'super_quiet': False
                   }
 
     if mode == 'batch':
         state_vars['batch_mode'] = True
         state_vars['self.plot'] = False
         state_vars['verbose'] = False
+        state_vars['super_quiet'] = True
         state_vars['write_log_file'] = False
     elif mode == 'mcmc':
         state_vars['plot'] = False
         state_vars['verbose'] = False
+        state_vars['super_quiet'] = True
         state_vars['write_log_file'] = False
         state_vars['write_output_files'] = False
         state_vars['scale_existing_alpha'] = True

@@ -41,7 +41,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
         try:
             regridType = int(regridType)
         except ValueError:
-            Pgrid = _procF_(os.path.join(atm.config.path, regridType))
+            Pgrid = read_grid_points_from_file(os.path.join(atm.config.path, regridType))
     if isinstance(regridType, int):
         regrid_numsteps = regridType
         Pgrid = np.logspace(np.log10(Pmin), np.log10(Pmax), regrid_numsteps)
@@ -64,6 +64,8 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     if fillval in gas:
         atm.computeProp(False)
         gas = extrapolate(gas, fillval, atm)
+    if fillval in gas:
+        raise ValueError("fillval still in gas!")
     atm.gas = gas
 
     # ## Interpolate cloud onto the grid - fillval=0.0 extrapolates since we assume no clouds outside range and
@@ -79,21 +81,13 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     return 1
 
 
-def _procF_(filename):
-    try:
-        reg = open(filename, 'r')
-    except IOError:
-        print("file '" + filename + "' not found - no regrid")
-        return 0
-    print('Regridding on file ' + filename)
-    Pgrid = []
-    for line in reg:
-        Pgrid.append(float(line))
-    reg.close()
-    Pgrid = np.array(Pgrid)
+def read_grid_points_from_file(filename):
+    Pgrid = np.loadtxt(filename)
     if not np.all(np.diff(Pgrid) > 0.0):
-        print('Error in regrid:  P not increasing - flipping around and hoping for the best')
+        print('Error in regrid:  P not increasing - flipping around and trying again')
         Pgrid = np.fliplr(Pgrid)
+    if not np.all(np.diff(Pgrid) > 0.0):
+        raise ValueError('Error in regrid')
     return Pgrid
 
 
@@ -155,7 +149,7 @@ def extrapolate(gas, fillval, atm):
         r = r - dz
         gas[atm.config.C['Z']][i] = z - dz
 
-    # extrapolate out along last slope (move return gas above if you think you want this)
+    # extrapolate out along last slope
     if fillval in gas:
         for yvar in atm.config.C:
             if yvar in ['P', 'DZ']:
@@ -170,9 +164,8 @@ def extrapolate_outward(x, y, fillval):
         if y[i] != fillval:
             break
     slope = (y[i + 1] - y[i]) / (x[i + 1] - x[i])
-    intercept = y[i] - slope * x[i]
-    i = 0
-    while y[i] == fillval:
-        y[i] = slope * x[i] + intercept
-        i += 1
+    for j in range(i - 1, -1, -1):
+        y[j] = y[j + 1] + slope * (x[j + 1] - x[j])
+        if y[j] <= 0.0:
+            y[j] = 1e-20
     return y

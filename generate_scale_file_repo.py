@@ -28,5 +28,5 @@ def get_value(p, c):
     if c == 'nh3':
         v = str(0.5)
     else:
-        v = str(1.0)
+        v = str(0.9)
     return v
