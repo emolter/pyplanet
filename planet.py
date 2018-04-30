@@ -47,22 +47,22 @@ class Planet:
         kwargs = state_variables.init_state_variables(mode.lower(), **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
-        if not self.super_quiet:
+        if self.verbose:
             self.show_state()
 
         #  ##Set up log file
         if self.write_log_file:
             runStart = datetime.datetime.now()
             self.logFile = 'Logs/{}_{}.log'.format(self.planet, runStart.strftime("%Y%m%d_%H%M"))
-            self.log = utils.setupLogFile(self.logFile, not self.super_quiet)
-            utils.log(self.log, self.planet + ' start ' + str(runStart), not self.super_quiet)
+            self.log = utils.setupLogFile(self.logFile, self.verbose)
+            utils.log(self.log, self.planet + ' start ' + str(runStart), self.verbose)
         else:
             self.log = None
 
         #  ## Get config
         if config.lower() == 'planet':
             config = self.planet + '/config.par'
-        if not self.super_quiet:
+        if self.verbose:
             print('Reading config file:  ', config)
             print("\t'print(x.config.show())' to see config parameters (where x in the instance name, e.g. 'j').")
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
@@ -93,7 +93,7 @@ class Planet:
         if self.use_existing_alpha or self.scale_existing_alpha:
             freqs_read = np.load('Scratch/freqs.npy')
             freqs = [f for f in freqs_read]
-            if not self.super_quiet:
+            if self.verbose:
                 print("Setting frequencies to ", freqs)
         reuse = False
         if isinstance(freqs, str) and freqs == 'reuse':
@@ -115,7 +115,7 @@ class Planet:
             print('Using {} {}'.format(freqs[0], freqUnit))
             self.freqs = list(freqs[0])
             freqs = self.freqs
-        if self.verbose:
+        if self.verbose == 'loud':
             print('outType = {}'.format(outType))
 
         #  ##Start
@@ -126,7 +126,7 @@ class Planet:
         self.tip = None
         self.rotate = None
         if outType == 'Image':  # We now treat it as an image at one frequency
-            if self.verbose:
+            if self.verbose == 'loud':
                 print('imgSize = {} x {}'.format(self.imSize[0], self.imSize[1]))
             imtmp = []
             if abs(block[1]) > 1:
@@ -135,7 +135,7 @@ class Planet:
                 btmp = ''
 
         for i, bv in enumerate(b):
-            if self.verbose:
+            if self.verbose == 'loud':
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
             Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, discAverage=(self.bType == 'disc'))
             if self.bright.travel is not None:
@@ -163,7 +163,7 @@ class Planet:
         #  ##Write output files
         if self.write_output_files:
             outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
-            if self.verbose:
+            if self.verbose == 'loud':
                 print('\nWriting {} data to {}'.format(outType, datFile))
             self.__setHeader__(missed_planet)
             self.fIO.write(outputFile, outType, freqs, freqUnit, b, self.Tb, self.header)
@@ -180,7 +180,12 @@ class Planet:
         return self.data_return
 
     def set_state(self, set_mode='set', **kwargs):
+        """
+        set_mode:  'set' or 'init', if set, checks list
+        """
         for k, v in kwargs.iteritems():
+            if isinstance(v, str):
+                v = v.lower()
             if k in self.state_vars:
                 setattr(self, k, v)
                 if set_mode == 'set':
@@ -361,8 +366,7 @@ class Planet:
             s = '{} in {} frequency steps ({} - {} {})'.format(self.planet, len(freqs), freqs[0], freqs[-1], utils.proc_unit(freqUnit))
         else:
             s = '{} at {} {}'.format(self.planet, freqs[0], utils.proc_unit(freqUnit))
-        if not self.super_quiet:
-            utils.log(self.log, s, True)
+        utils.log(self.log, s, self.verbose)
         self.freqs = freqs
         self.freqUnit = utils.proc_unit(freqUnit)
         return freqs, utils.proc_unit(freqUnit)

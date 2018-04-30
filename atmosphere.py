@@ -28,11 +28,10 @@ class Atmosphere:
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:
-            self.show_state('Atmosphere')
-        self.logFile = utils.setupLogFile(log, not self.super_quiet)
-
-        if not self.super_quiet:
+            self.show_state()
             print('\n---Atmosphere of {}---'.format(planet))
+        self.logFile = utils.setupLogFile(log, self.verbose)
+
         if type(config) == str:
             if config.lower() == 'planet':
                 config = self.planet + '/config.par'
@@ -47,14 +46,13 @@ class Atmosphere:
         self.propGen = {}
         self.propGen['compute'] = self.computeProp
 
-        if not self.super_quiet:
-            print('Planet ' + self.planet)
-        if self.config.gasType == 'read':  # this assumes that cloudType is then also 'read'
-            utils.log(self.logFile, '\tReading from: ' + self.config.filename, not self.super_quiet)
-            utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, not self.super_quiet)
-            utils.log(self.logFile, '\tCloud file:  ' + self.config.cloudFile, not self.super_quiet)
         if self.verbose:
+            print('Planet ' + self.planet)
             print(self.config.show())
+        if self.config.gasType == 'read':  # this assumes that cloudType is then also 'read'
+            utils.log(self.logFile, '\tReading from: ' + self.config.filename, self.verbose)
+            utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, self.verbose)
+            utils.log(self.logFile, '\tCloud file:  ' + self.config.cloudFile, self.verbose)
 
     def run(self, Pmin=None, Pmax=None, regridType=None, gasType=None, cloudType=None, otherType=None, tweak=True):
         """This is the standard pipeline"""
@@ -77,7 +75,7 @@ class Atmosphere:
             print('Error:  No such gasType: ', gasType)
             return 0
         else:
-            self.gasGen[gasType](verbose=self.verbose)
+            self.gasGen[gasType]()
         self.nAtm = len(self.gas[0])
 
         if self.batch_mode:
@@ -94,10 +92,10 @@ class Atmosphere:
             print('Error:  No such cloudType: ', cloudType)
             return 0
         else:
-            self.cloudGen[cloudType](verbose=self.verbose)
+            self.cloudGen[cloudType]()
 
         # ## Put onto common grid
-        if not self.super_quiet:
+        if self.verbose:
             print("Regrid:  {}".format(regridType))
         regridded = regrid.regrid(self, regridType=regridType, Pmin=Pmin, Pmax=Pmax)
         self.nAtm = len(self.gas[0])
@@ -110,10 +108,10 @@ class Atmosphere:
             print('Error:  no such otherTpe: ', otherType)
             return 0
         else:
-            self.propGen[otherType](verbose=self.verbose)
+            self.propGen[otherType]()
 
         angularDiameter = 2.0 * math.atan(self.layerProperty[self.config.LP['R']][0] / self.config.distance)
-        if self.verbose:
+        if self.verbose == 'loud':
             print('angular radius = {} arcsec'.format(utils.r2asec(angularDiameter / 2.0)))
 
         # ## Plot data
@@ -126,7 +124,12 @@ class Atmosphere:
         return self.nAtm
 
     def set_state(self, set_mode='set', **kwargs):
+        """
+        set_mode:  'set' or 'init', if set, checks list
+        """
         for k, v in kwargs.iteritems():
+            if isinstance(v, str):
+                v = v.lower()
             if k in self.state_vars:
                 setattr(self, k, v)
                 if set_mode == 'set':
@@ -140,7 +143,7 @@ class Atmosphere:
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
 
-    def readGas(self, gasFile=None, Cdict=None, verbose=False):
+    def readGas(self, gasFile=None, Cdict=None):
         """Reads gas profile file as self.gas"""
 
         if gasFile is None:
@@ -154,22 +157,21 @@ class Atmosphere:
             self.batch_mode = False
         gasFile = os.path.join(self.config.path, gasFile)
 
-        if not self.super_quiet:
+        if self.verbose:
             print('Reading constituents from {}'.format(gasFile))
-        self.gas = []
-        if not self.super_quiet:
             print('\tUsing atmsopheric component:  ', end='')
+        self.gas = []
         for k in Cdict:
-            if not self.super_quiet:
-                print(k + '  ', end='')
             self.gas.append([])
+            if self.verbose:
+                print(k + '  ', end='')
         self.nConstituent = len(Cdict)
         try:
             fp = open(gasFile, "r")
         except IOError:
             print(gasFile + ' was not found - returning no gas profile\n\n')
             raise IOError
-        if not self.super_quiet:
+        if self.verbose:
             print(' ')
         expected_number = utils.get_expected_number_of_entries(fp)
         for line in fp:
@@ -189,7 +191,7 @@ class Atmosphere:
             Cdict[nid[k]] = i
         self.config.C = Cdict
 
-        if not self.super_quiet:
+        if self.verbose:
             print('\tRead ' + str(self.nGas) + ' lines')
         fp.close()
         self.gas = np.array(self.gas)
@@ -206,7 +208,7 @@ class Atmosphere:
 
         return self.nGas
 
-    def readCloud(self, cloudFile=None, Cldict=None, verbose=False):
+    def readCloud(self, cloudFile=None, Cldict=None):
         """Reads in cloud data if we have it..."""
 
         if cloudFile is None:
@@ -220,22 +222,21 @@ class Atmosphere:
             self.batch_mode = False
         cloudFile = os.path.join(self.config.path, cloudFile)
 
-        if not self.super_quiet:
+        if self.verbose:
             print('Reading clouds from {}'.format(cloudFile))
-        self.cloud = []
-        if not self.super_quiet:
             print('\tUsing cloud components:  ', end='')
+        self.cloud = []
         for k in Cldict:
-            if not self.super_quiet:
-                print(k, '  ', end='')
             self.cloud.append([])
+            if self.verbose:
+                print(k, '  ', end='')
         self.nParticulate = len(Cldict.keys())
         try:
             fp = open(cloudFile, "r")
         except IOError:
             print(cloudFile, ' was not found - returning no clouds\n\n')
             raise IOError
-        if not self.super_quiet:
+        if self.verbose:
             print(' ')
         expected_number = utils.get_expected_number_of_entries(fp)
         for line in fp:
@@ -254,7 +255,7 @@ class Atmosphere:
             Cldict[nid[k]] = i
         self.config.Cl = Cldict
 
-        if not self.super_quiet:
+        if self.verbose:
             print('\tRead ', str(self.nCloud), ' lines')
         fp.close()
         self.cloud = np.array(self.cloud)
@@ -302,7 +303,7 @@ class Atmosphere:
 
         # Run module then log
         self.tweakComment, self.gas, self.cloud = tweakModule.modify(self.gas, self.cloud, self.config.C, self.config.Cl)
-        if not self.super_quiet:
+        if self.verbose:
             print('---tweakComment')
             print(self.tweakComment)
             print('---')
@@ -315,7 +316,7 @@ class Atmosphere:
         utils.log(self.logFile, '====================================================================', False)
         _tp.close()
 
-    def computeProp(self, verbose=False):
+    def computeProp(self):
         """This module computes derived atmospheric properties (makes self.layerProperty)"""
         if self.batch_mode:
             return 0
@@ -333,7 +334,7 @@ class Atmosphere:
                 iOffset = i
         zOffset = self.gas[self.config.C['Z']][iOffset]
         z_at_p_ref = self.config.Req
-        if verbose:
+        if self.verbose == 'loud':
             print("z,P offset:  ", zOffset, self.gas[self.config.C['P']][iOffset])
 
         for i, zv in enumerate(self.gas[self.config.C['Z']]):

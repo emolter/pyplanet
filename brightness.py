@@ -53,17 +53,21 @@ class Brightness():
     def __layerAbsorp__(self, freqs, atm, alpha):
         numLayers = len(atm.gas[0])
         layerAlp = []
-        utils.log(self.log, '{} layers'.format(numLayers), not self.super_quiet)
+        utils.log(self.log, '{} layers'.format(numLayers), self.verbose)
         for layer in range(numLayers):
+            layerAlp.append(alpha.getAlpha(freqs, layer, atm, units=utils.alphaUnit))
             if self.verbose:
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
-                sys.stdout.flush()
-            layerAlp.append(alpha.getAlpha(freqs, layer, atm, units=utils.alphaUnit))
         layerAlp = np.array(layerAlp).transpose()
         return layerAlp
 
     def set_state(self, set_mode='set', **kwargs):
+        """
+        set_mode:  'set' or 'init', if set, checks list
+        """
         for k, v in kwargs.iteritems():
+            if isinstance(v, str):
+                v = v.lower()
             if k in self.state_vars:
                 setattr(self, k, v)
                 if set_mode == 'set':
@@ -83,7 +87,8 @@ class Brightness():
         if self.layerAlpha is None:
             self.layerAbsorption(freqs, atm, alpha)
         # get path lengths (ds_layer) vs layer number (num_layer) - currently frequency independent refractivity
-        travel = ray.compute_ds(atm, b, orientation, gtype=None, verbose=self.verbose, plot=self.plot)
+        print_meta = self.verbose == 'loud'
+        travel = ray.compute_ds(atm, b, orientation, gtype=None, verbose=print_meta, plot=self.plot)
         self.travel = travel
         if travel.ds is None:
             print('Off planet')

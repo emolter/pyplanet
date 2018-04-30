@@ -7,7 +7,7 @@ import atmosphere
 import chemistry
 
 
-def regrid(atm, regridType=None, Pmin=None, Pmax=None, verbose=False):
+def regrid(atm, regridType=None, Pmin=None, Pmax=None):
     """This puts atm and cloud on the same grid used later for calculations.  It has three different regimes:
         1 - interpolating within given points:  currently linear -- moving to: P,T,z are assumed to follow given adiabat
         2 - extrapolating outward:  project last slope out for everything
@@ -26,7 +26,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None, verbose=False):
     if regridType is None:
         regridType = atm.config.regridType
     if (isinstance(regridType, str) and string.lower(regridType) == 'none') or regridType is None:
-        print('No regridding.  Note that there is a risk that not everything is on the same grid...\n')
+        print('Warning:  No regridding.  Note that there is a risk that not everything is on the same grid...\n')
         return 0
 
     # set default Pmin/Pmax
@@ -80,7 +80,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None, verbose=False):
 def read_grid_points_from_file(filename):
     Pgrid = np.loadtxt(filename)
     if not np.all(np.diff(Pgrid) > 0.0):
-        print('Error in regrid:  P not increasing - flipping around and trying again')
+        print('Warning in regrid:  P not increasing - flipping around and trying again')
         Pgrid = np.fliplr(Pgrid)
     if not np.all(np.diff(Pgrid) > 0.0):
         raise ValueError('Error in regrid')

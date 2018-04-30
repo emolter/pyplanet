@@ -98,9 +98,9 @@ class Alpha:
                 print(s * 3)
                 utils.log(self.log, "Can't load " + absorber, True)
         self.ordered_constituents = sorted(self.constituent.keys())
-        utils.log(self.log, 'Using modules:', not self.super_quiet)
+        utils.log(self.log, 'Using modules:', self.verbose)
         for k in self.constituent:
-            utils.log(self.log, '\t' + k + ':  ' + self.constituent[k], not self.super_quiet)
+            utils.log(self.log, '\t' + k + ':  ' + self.constituent[k], self.verbose)
 
     def getAlpha(self, freqs, layer, atm, units='invcm', plot=None):
         """This is a wrapper to get the absorption coefficient, either from calculating from formalisms
@@ -142,6 +142,7 @@ class Alpha:
         """This gets the total absoprtion coefficient from gas.  It assumes the correct frequency units, but maybe should correct that.
            Returns total absorption at that layer."""
         absorb = []
+        print_meta = self.verbose == 'loud'
         for k in self.ordered_constituents:
             path = os.path.join(self.constituentsAreAt, k)
             if k[0:4].lower() == 'clou':
@@ -150,7 +151,7 @@ class Alpha:
             else:
                 X = gas
                 D = gas_dict
-            absorb.append(self.absorptionModule[k].alpha(freqs, T, P, X, D, self.otherPar, units=units, path=path, verbose=self.verbose))
+            absorb.append(self.absorptionModule[k].alpha(freqs, T, P, X, D, self.otherPar, units=units, path=path, verbose=print_meta))
         absorb = np.array(absorb)
         absorb = absorb.transpose()
         totalAbsorption = np.zeros_like(freqs)
@@ -169,7 +170,12 @@ class Alpha:
             self.fp_gen_alpha.write(s)
 
     def set_state(self, set_mode='set', **kwargs):
+        """
+        set_mode:  'set' or 'init', if set, checks list
+        """
         for k, v in kwargs.iteritems():
+            if isinstance(v, str):
+                v = v.lower()
             if k in self.state_vars:
                 setattr(self, k, v)
                 if set_mode == 'set':
