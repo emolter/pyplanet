@@ -21,7 +21,7 @@ class Brightness():
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:
-            self.show_state('Brightness')
+            self.show_state()
         self.log = utils.setupLogFile(log)
         self.layerAlpha = None
 
@@ -73,7 +73,7 @@ class Brightness():
                     print('state_var [{}] not found.'.format(k))
 
     def show_state(self, stype):
-        print("{} state variables".format(stype))
+        print("Brightness state variables")
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
 

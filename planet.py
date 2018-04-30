@@ -48,7 +48,7 @@ class Planet:
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         if not self.super_quiet:
-            self.show_state('Planet')
+            self.show_state()
 
         #  ##Set up log file
         if self.write_log_file:
@@ -189,8 +189,8 @@ class Planet:
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
 
-    def show_state(self, stype):
-        print("{} state variables".format(stype))
+    def show_state(self):
+        print("Planet state variables")
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
 

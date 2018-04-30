@@ -18,7 +18,7 @@ class Alpha:
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:
-            self.show_state('Alpha')
+            self.show_state()
         self.log = utils.setupLogFile(log)
 
         # get config
@@ -179,6 +179,6 @@ class Alpha:
                     print('state_var [{}] not found.'.format(k))
 
     def show_state(self, stype):
-        print("{} state variables".format(stype))
+        print("Alpha state variables")
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))

@@ -135,8 +135,8 @@ class Atmosphere:
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
 
-    def show_state(self, stype):
-        print("{} state variables".format(stype))
+    def show_state(self):
+        print("Atmosphere state variables")
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
 
