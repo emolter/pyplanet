@@ -28,9 +28,10 @@ class Atmosphere:
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:
-            self.show_state()
             print('\n---Atmosphere of {}---'.format(planet))
-        self.logFile = utils.setupLogFile(log, self.verbose)
+        if self.verbose == 'loud':
+            print.show_state()
+        self.logFile = utils.setupLogFile(log)
 
         if type(config) == str:
             if config.lower() == 'planet':

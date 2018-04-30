@@ -293,7 +293,6 @@ def plotStuff(atm=None, r=None, b=None, gtype=None, delta_lng=None, geoid=None, 
     global plotExist
     if ray is None:
         if not plotExist:
-            print('Generating plots')
             plotExist = True
         plt.figure('observer')
         plt.plot(r * b[0], r * b[1], '.', color='k')

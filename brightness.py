@@ -20,7 +20,7 @@ class Brightness():
         kwargs = state_variables.init_state_variables('normal', **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
-        if self.verbose:
+        if self.verbose == 'loud':
             self.show_state()
         self.log = utils.setupLogFile(log)
         self.layerAlpha = None
@@ -56,7 +56,7 @@ class Brightness():
         utils.log(self.log, '{} layers'.format(numLayers), self.verbose)
         for layer in range(numLayers):
             layerAlp.append(alpha.getAlpha(freqs, layer, atm, units=utils.alphaUnit))
-            if self.verbose:
+            if self.verbose == 'loud':
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
         layerAlp = np.array(layerAlp).transpose()
         return layerAlp
@@ -76,7 +76,7 @@ class Brightness():
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
 
-    def show_state(self, stype):
+    def show_state(self):
         print("Brightness state variables")
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))

@@ -17,7 +17,7 @@ class Alpha:
         kwargs = state_variables.init_state_variables('normal', **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
-        if self.verbose:
+        if self.verbose == 'loud':
             self.show_state()
         self.log = utils.setupLogFile(log)
 
@@ -184,7 +184,7 @@ class Alpha:
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
 
-    def show_state(self, stype):
+    def show_state(self):
         print("Alpha state variables")
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
