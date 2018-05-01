@@ -46,7 +46,7 @@ class Atmosphere:
 
         if self.verbose == 'loud':
             print('Planet ' + self.planet)
-            print(self.config.show())
+            self.config.display()
         if self.config.gasType == 'read':  # this assumes that cloudType is then also 'read'
             utils.log(self.logFile, '\tReading from: ' + self.config.filename, self.verbose)
             utils.log(self.logFile, '\tAtmosphere file:  ' + self.config.gasFile, self.verbose)

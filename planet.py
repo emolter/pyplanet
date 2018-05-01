@@ -185,7 +185,7 @@ class Planet:
 
     def set_state(self, set_mode='set', **kwargs):
         """
-        set_mode:  'set' or 'init', if set, checks list
+        set_mode:  'set' or 'init'. If set, checks list.
         """
         for k, v in kwargs.iteritems():
             if isinstance(v, str):
