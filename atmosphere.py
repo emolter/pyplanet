@@ -16,7 +16,7 @@ import state_variables
 
 
 class Atmosphere:
-    def __init__(self, planet, config='planet', log=None, **kwargs):
+    def __init__(self, planet, mode='normal', config='planet', log=None, **kwargs):
         """reads/computes atmospheres.  This returns:
                self.gas
                self.cloud
@@ -24,7 +24,7 @@ class Atmosphere:
             on the appropriate grid."""
 
         self.planet = planet.capitalize()
-        kwargs = state_variables.init_state_variables('normal', **kwargs)
+        kwargs = state_variables.init_state_variables(mode, **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:

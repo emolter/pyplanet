@@ -66,14 +66,14 @@ class Planet:
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
-        self.atm = atm.Atmosphere(self.planet, config=self.config, log=self.log, **kwargs)
+        self.atm = atm.Atmosphere(self.planet, mode=mode, config=self.config, log=self.log, **kwargs)
         self.atm.run()
 
         #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
-        self.alpha = alpha.Alpha(config=self.config, log=self.log, **kwargs)
+        self.alpha = alpha.Alpha(mode=mode, config=self.config, log=self.log, **kwargs)
 
         #  ## Next compute radiometric properties - initialize bright and return data class
-        self.bright = bright.Brightness(log=self.log, **kwargs)
+        self.bright = bright.Brightness(mode=mode, log=self.log, **kwargs)
         self.data_return = data_handling.DataReturn()
 
         # ## Create fileIO class

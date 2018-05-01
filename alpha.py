@@ -10,11 +10,11 @@ import state_variables
 
 
 class Alpha:
-    def __init__(self, config=None, log=None, **kwargs):
+    def __init__(self, mode='normal', config=None, log=None, **kwargs):
         """Reads in absorption formalisms
            Note that they are all in GHz"""
 
-        kwargs = state_variables.init_state_variables('normal', **kwargs)
+        kwargs = state_variables.init_state_variables(mode, **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         self.log = utils.setupLogFile(log)
@@ -131,8 +131,11 @@ class Alpha:
             for j in range(self.alpha_data.shape[2] - 1):
                 new_value = self.alpha_data[layer, i, j]
                 if self.ordered_constituents[j] in self.scale_constituent_columns:
-                    x = self.scale_constituent_columns.index(self.ordered_constituents[j])
-                    new_value *= self.scale_constituent_values[layer, x]
+                    if len(self.scale_constituent_columns) > 1:
+                        x = self.scale_constituent_columns.index(self.ordered_constituents[j])
+                        new_value *= self.scale_constituent_values[layer, x]
+                    else:
+                        new_value *= self.scale_constituent_values[layer]
                 totalAbsorption[i] += new_value
         return totalAbsorption
 

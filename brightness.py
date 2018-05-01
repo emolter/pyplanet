@@ -14,10 +14,10 @@ import state_variables
 
 class Brightness():
 
-    def __init__(self, log=None, **kwargs):
+    def __init__(self, mode='normal', log=None, **kwargs):
         """This calculates the brightness temperature of the planets.
            It must be used with atmosphere and alpha"""
-        kwargs = state_variables.init_state_variables('normal', **kwargs)
+        kwargs = state_variables.init_state_variables(mode, **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         self.log = utils.setupLogFile(log)
