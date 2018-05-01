@@ -40,7 +40,7 @@ class planetConfig:
                 val = set_single_val(val, self.toks[tok]['unit'])
             setattr(self, self.toks[tok]['name'], val)
         self.setConfig(configFile)
-        pars = self.show()
+        pars = self.show(return_only=True)
         utils.log(self.logFile, planet, False)
         utils.log(self.logFile, configFile, False)
         utils.log(self.logFile, pars, False)
@@ -112,11 +112,13 @@ class planetConfig:
             self.vwlat = [0.0, 90.0]
             self.vwdat = [0.0, 0.0]
 
-    def show(self):
+    def show(self, return_only=False):
         """Returns string containing configuration"""
         s = 'Run parameters:\n'
         keys = self.toks.keys()
         keys.sort()
         for key in keys:
             s += '\t{:15s}:  {}\n'.format(key, str(getattr(self, self.toks[key]['name'])))
+        if not return_only:
+            print(s)
         return s

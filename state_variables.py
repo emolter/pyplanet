@@ -11,7 +11,7 @@ def init_state_variables(mode, **kwargs):
                   'use_existing_alpha': False,
                   'scale_existing_alpha': False,
                   'scale_file_name': None,
-                  'output_type': 'frequency'
+                  'output_type': 'frequency'  # or 'wavelength'
                   }
 
     if mode == 'batch':
@@ -43,5 +43,12 @@ def init_state_variables(mode, **kwargs):
         else:
             print("'{}' keyword not found.".format(k))
             raise ValueError("Aborting since you probably wanted this keyword")
+
+    # check various constraints
+    only_one_allowed = ['batch_mode', 'generate_alpha', 'use_existing_alpha', 'scale_existing_alpha']
+    xxx = [state_vars[x] for x in only_one_allowed]
+    if xxx.count(True) > 1:
+        print(only_one_allowed)
+        raise ValueError("Only one is allowed to be True")
 
     return state_vars

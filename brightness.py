@@ -20,8 +20,6 @@ class Brightness():
         kwargs = state_variables.init_state_variables('normal', **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
-        if self.verbose == 'loud':
-            self.show_state()
         self.log = utils.setupLogFile(log)
         self.layerAlpha = None
 
@@ -29,28 +27,7 @@ class Brightness():
         self.layerAlpha = None
 
     def layerAbsorption(self, freqs, atm, alpha):
-        """
-        This is just a wrapper for __layerAbsorp__ for reasons I don't recall
-        """
         self.freqs = freqs
-        self.layerAlpha = self.__layerAbsorp__(freqs, atm, alpha)
-        if self.plot:
-            P = atm.gas[atm.config.C['P']]
-            plt.figure('alpha')
-            for i, f in enumerate(freqs):
-                label = '{:.1f} GHz'.format(f)
-                plt.loglog(self.layerAlpha[i], P, label=label)
-            v = list(plt.axis())
-            v[2] = 100.0 * math.ceil(atm.gas[atm.config.C['P']][-1] / 100.0)
-            v[3] = 1.0E-7 * math.ceil(atm.gas[atm.config.C['P']][0] / 1E-7)
-            plt.axis(v)
-            plt.xlabel(utils.alphaUnit)
-            plt.ylabel('P [bars]')
-            plt.legend()
-            # lgd=plt.legend(loc='upper left',bbox_to_anchor=(1,1))
-            # lgd.set_visible(True)  # This is just to remind me...
-
-    def __layerAbsorp__(self, freqs, atm, alpha):
         numLayers = len(atm.gas[0])
         layerAlp = []
         utils.log(self.log, '{} layers'.format(numLayers), self.verbose)
@@ -58,8 +35,7 @@ class Brightness():
             layerAlp.append(alpha.getAlpha(freqs, layer, atm, units=utils.alphaUnit))
             if self.verbose == 'loud':
                 print('\r\tAbsorption in layer {}   '.format(layer + 1), end='')
-        layerAlp = np.array(layerAlp).transpose()
-        return layerAlp
+        self.layerAlpha = np.array(layerAlp).transpose()
 
     def set_state(self, set_mode='set', **kwargs):
         """
@@ -75,6 +51,8 @@ class Brightness():
             else:
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
+        if set_mode == 'init' and self.verbose == 'loud':
+            self.show_state()
 
     def show_state(self):
         print("Brightness state variables")
@@ -87,7 +65,7 @@ class Brightness():
         if self.layerAlpha is None:
             self.layerAbsorption(freqs, atm, alpha)
         # get path lengths (ds_layer) vs layer number (num_layer) - currently frequency independent refractivity
-        print_meta = self.verbose == 'loud'
+        print_meta = (self.verbose == 'loud')
         travel = ray.compute_ds(atm, b, orientation, gtype=None, verbose=print_meta, plot=self.plot)
         self.travel = travel
         if travel.ds is None:
@@ -156,7 +134,7 @@ class Brightness():
                 top_Tb_lyr = utils.T_cmb
             else:
                 top_Tb_lyr /= integrated_W[j]  # Normalize by integrated weights (makes assumptions)
-                if integrated_W[j] < 0.96:
+                if integrated_W[j] < 0.96 and self.verbose:
                     print("Weight correction at {:.2f} is {:.4f} (showing below 0.96)".format(freqs[j], integrated_W[j]))
             self.Tb.append(top_Tb_lyr)
         self.tau = np.array(self.tau).transpose()
@@ -174,39 +152,36 @@ class Brightness():
             plt.figure('radtran')
             plt.subplot(121)
             for i, f in enumerate(freqs):
-                # label=r'$\tau$: %.1f GHz' % (f)
-                # plt.semilogy(self.tau[i],self.P,label=label)
                 if normW4plot:
                     wplot = self.W[i] / np.max(self.W[i])
                 else:
                     wplot = self.W[i]
-                label = (r'{:.1f} GHz').format(f)
-                # label = (r'{:.1f} cm').format(30.0 / f)
-                if len(wplot) == len(self.P):
-                    plt.semilogy(wplot, self.P, label=label, linewidth=3)
+                if self.output_type == 'frequency':
+                    label = (r'{:.1f} GHz').format(f)
                 else:
-                    print("Not plotted since wplot is length {} and P is length {}".format(len(wplot), len(self.P)))
+                    label = (r'{:.1f} cm').format(30.0 / f)
+                plt.semilogy(wplot, self.P, label=label, linewidth=3)
             plt.legend()
             plt.axis(ymin=100.0 * math.ceil(np.max(self.P) / 100.0), ymax=1.0E-7 * math.ceil(np.min(self.P) / 1E-7))
             plt.ylabel('P [bars]')
+
             # ####-----Alpha
             plt.figure('alpha')
             for i, f in enumerate(freqs):
-                label = (r'$\alpha$: {:.1f} GHz').format(f)
-                label = (r'{:.1f} cm').format(30.0 / f)
+                if self.output_type == 'frequency':
+                    label = (r'$\alpha$: {:.1f} GHz').format(f)
+                else:
+                    label = (r'{:.1f} cm').format(30.0 / f)
                 pl = list(self.layerAlpha[i])
                 del pl[0]
-                # delete because alpha is at the layer boundaries, so there are n+1 of them
-                if len(pl) == len(self.P):
-                    plt.loglog(pl, self.P, label=label)
-                else:
-                    print("Not plotted since wplot is length {} and P is length {}".format(len(pl), len(self.P)))
+                plt.loglog(pl, self.P, label=label)
             plt.legend()
             v = list(plt.axis())
             v[2] = 100.0 * math.ceil(np.max(self.P) / 100.0)
             v[3] = 1.0E-7 * math.ceil(np.min(self.P) / 1E-7)
             plt.axis(v)
             plt.ylabel('P [bars]')
+
             # ####-----Brightness temperature
             plt.figure('brightness')
             lt = '-'
@@ -334,10 +309,3 @@ class Brightness():
             fp.write(s)
         s = ('{} ({} x {})').format(filename, i + 1, j + 1)
         return s
-
-
-def scriptR(T, freq):
-    """See Janssen pg 7"""
-    a = (utils.hP * freq * utils.Units[utils.processingFreqUnit]) / (utils.kB * T)
-    R = (math.exp(a) - 1.0) / a
-    return R

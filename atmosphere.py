@@ -29,8 +29,6 @@ class Atmosphere:
         self.set_state(set_mode='init', **kwargs)
         if self.verbose:
             print('\n---Atmosphere of {}---'.format(planet))
-        if self.verbose == 'loud':
-            print.show_state()
         self.logFile = utils.setupLogFile(log)
 
         if type(config) == str:
@@ -47,7 +45,7 @@ class Atmosphere:
         self.propGen = {}
         self.propGen['compute'] = self.computeProp
 
-        if self.verbose:
+        if self.verbose == 'loud':
             print('Planet ' + self.planet)
             print(self.config.show())
         if self.config.gasType == 'read':  # this assumes that cloudType is then also 'read'
@@ -138,6 +136,8 @@ class Atmosphere:
             else:
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
+        if set_mode == 'init' and self.verbose == 'loud':
+            self.show_state()
 
     def show_state(self):
         print("Atmosphere state variables")

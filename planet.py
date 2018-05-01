@@ -25,10 +25,10 @@ class Planet:
            Inputs:
                 name:  'Jupiter', 'Saturn', 'Uranus', 'Neptune'
                 config:  config file name.  If 'planet' sets to <name>/config.par
-                mode:  '[normal]/batch/mcmc/generate_alpha/use_alpha'  sets up for various special modes
+                mode:  sets up for various special modes '[normal]/batch/mcmc/scale_alpha/use_alpha'
                 kwargs: 'verbose' and 'plot' (and other state_vars - see show_state())"""
 
-        planetList = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
+        planet_list = ['Jupiter', 'Saturn', 'Neptune', 'Uranus']
         self.planet = name.capitalize()
         self.header = {}
         self.imrow = False
@@ -39,7 +39,7 @@ class Planet:
 
         print('Planetary modeling  (ver {})'.format(version))
 
-        if self.planet not in planetList:
+        if self.planet not in planet_list:
             print("{} not found.".format(self.planet))
             return
 
@@ -47,8 +47,6 @@ class Planet:
         kwargs = state_variables.init_state_variables(mode.lower(), **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
-        if self.verbose:
-            self.show_state()
 
         #  ##Set up log file
         if self.write_log_file:
@@ -61,10 +59,10 @@ class Planet:
 
         #  ## Get config
         if config.lower() == 'planet':
-            config = self.planet + '/config.par'
+            config = os.path.join(self.planet, 'config.par')
         if self.verbose:
             print('Reading config file:  ', config)
-            print("\t'print(x.config.show())' to see config parameters (where x in the instance name, e.g. 'j').")
+            print("\t'X.config.show()' to see config parameters (where X in the instance name, e.g. 'j').")
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
@@ -81,13 +79,12 @@ class Planet:
         # ## Create fileIO class
         self.fIO = fileIO.FileIO(self.output_type)
 
-    def run(self, freqs='reuse', b=[0.0, 0.0], freqUnit='GHz', block=[1, 1], orientation=None):
+    def run(self, freqs='reuse', b=[0.0, 0.0], freqUnit='GHz', block=[1, 1]):
         """Runs the model to produce the brightness temperature, weighting functions etc etc
             freqs:  frequency request as set in set_freq.  If 'reuse' it won't recompute absorption/layer (allows many b)
             b:  "impact parameter" request as set in set_b
             freqUnit:  unit that freqs is in
-            block:  blocks to produce image (related to memory error...)
-            orientation:  orientation vector of planet"""
+            block:  blocks to produce image (related to memory error...)"""
 
         #  ##Set freqs
         if self.use_existing_alpha or self.scale_existing_alpha:
@@ -137,7 +134,7 @@ class Planet:
         for i, bv in enumerate(b):
             if self.verbose == 'loud':
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
-            Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, orientation, discAverage=(self.bType == 'disc'))
+            Tbt = self.bright.single(freqs, self.atm, bv, self.alpha, self.config.orientation, discAverage=(self.bType == 'disc'))
             if self.bright.travel is not None:
                 if self.rNorm is None:
                     self.rNorm = self.bright.travel.rNorm
@@ -167,15 +164,17 @@ class Planet:
                 print('\nWriting {} data to {}'.format(outType, datFile))
             self.__setHeader__(missed_planet)
             self.fIO.write(outputFile, outType, freqs, freqUnit, b, self.Tb, self.header)
-            if self.plot and outType == 'Profile':
-                plt.figure("Profile")
-                Tbtr = np.transpose(self.Tb)
-                for j in range(len(freqs)):
-                    frqs = ('%.2f %s' % (self.freqs[j], self.freqUnit))
-                    plt.plot(bs, Tbtr[j], label=frqs)
-                plt.legend()
-                plt.xlabel('b')
-                plt.ylabel('$T_B$ [K]')
+
+        #  ##Plot if profile
+        if self.plot and outType == 'Profile':
+            plt.figure("Profile")
+            Tbtr = np.transpose(self.Tb)
+            for j in range(len(freqs)):
+                frqs = ('%.2f %s' % (self.freqs[j], self.freqUnit))
+                plt.plot(bs, Tbtr[j], label=frqs)
+            plt.legend()
+            plt.xlabel('b')
+            plt.ylabel('$T_B$ [K]')
 
         return self.data_return
 
@@ -193,6 +192,8 @@ class Planet:
             else:
                 if set_mode == 'set':
                     print('state_var [{}] not found.'.format(k))
+        if set_mode == 'init' and self.verbose:
+            self.show_state()
 
     def show_state(self):
         print("Planet state variables")
