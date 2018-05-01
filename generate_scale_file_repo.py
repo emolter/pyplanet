@@ -19,6 +19,7 @@ def generate(planet, constituent_list, value_list, mode='mcmc', output_filename=
     atm.run()
     atmospheric_pressure = atm.gas[atm.config.C['P']]
     atmospheric_temperature = atm.gas[atm.config.C['T']]
+    atmospheric_value = atm.gas[atm.config.C['H2S']]
 
     with open(output_filename, 'w') as fp:
         cl = ' '.join(constituent_list)
