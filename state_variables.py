@@ -3,6 +3,7 @@ from __future__ import print_function, absolute_import, division
 
 def init_state_variables(mode, **kwargs):
     state_vars = {'batch_mode': False,
+                  'initialize': True,
                   'write_output_files': True,
                   'write_log_file': True,
                   'plot': True,

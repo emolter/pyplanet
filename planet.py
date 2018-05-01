@@ -19,7 +19,7 @@ version = '2.3'
 
 
 class Planet:
-    def __init__(self, name, mode='normal', config='planet', **kwargs):
+    def __init__(self, name, mode='normal', config='config.par', **kwargs):
         """This is the 'executive function class to compute overall planetary emission.
            For both mode and kwargs look at state_variables.py
            Inputs:
@@ -47,6 +47,8 @@ class Planet:
         kwargs = state_variables.init_state_variables(mode.lower(), **kwargs)
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
+        self.mode = mode
+        self.kwargs = kwargs
 
         #  ##Set up log file
         if self.write_log_file:
@@ -58,22 +60,25 @@ class Planet:
             self.log = None
 
         #  ## Get config
-        if config.lower() == 'planet':
-            config = os.path.join(self.planet, 'config.par')
+        config = os.path.join(self.planet, config)
         if self.verbose:
             print('Reading config file:  ', config)
-            print("\t'X.config.show()' to see config parameters (where X in the instance name, e.g. 'j').")
+            print("\t'X.config.display()' to see config parameters (where X in the instance name, e.g. 'j').")
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
+        if self.initialize:
+            self.initialize_run()
+
+    def initialize_run(self):
         #  ## Create atmosphere:  attributes are self.atm.gas, self.atm.cloud and self.atm.layerProperty
-        self.atm = atm.Atmosphere(self.planet, mode=mode, config=self.config, log=self.log, **kwargs)
+        self.atm = atm.Atmosphere(self.planet, mode=self.mode, config=self.config, log=self.log, **self.kwargs)
         self.atm.run()
 
         #  ## Read in absorption modules:  to change absorption, edit files under /constituents'
-        self.alpha = alpha.Alpha(mode=mode, config=self.config, log=self.log, **kwargs)
+        self.alpha = alpha.Alpha(mode=self.mode, config=self.config, log=self.log, **self.kwargs)
 
         #  ## Next compute radiometric properties - initialize bright and return data class
-        self.bright = bright.Brightness(mode=mode, log=self.log, **kwargs)
+        self.bright = bright.Brightness(mode=self.mode, log=self.log, **self.kwargs)
         self.data_return = data_handling.DataReturn()
 
         # ## Create fileIO class

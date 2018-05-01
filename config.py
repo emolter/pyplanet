@@ -40,7 +40,7 @@ class planetConfig:
                 val = set_single_val(val, self.toks[tok]['unit'])
             setattr(self, self.toks[tok]['name'], val)
         self.setConfig(configFile)
-        pars = self.show(return_only=True)
+        pars = self.show()
         utils.log(self.logFile, planet, False)
         utils.log(self.logFile, configFile, False)
         utils.log(self.logFile, pars, False)
@@ -112,13 +112,35 @@ class planetConfig:
             self.vwlat = [0.0, 90.0]
             self.vwdat = [0.0, 0.0]
 
-    def show(self, return_only=False):
+    def update_config(self, key, value, override=False):
+        if not isinstance(key, list):
+            key = [key]
+        if not isinstance(value, list):
+            value = [value]
+        if len(key) != len(value):
+            print("key/value pairs not matched.")
+            return None
+        for i, k in enumerate(key):
+            if not override and k not in self.toks.keys():
+                print("{} not in config keys and override is False")
+                continue
+            setattr(self, k, value[i])
+            self.toks[k] = {}
+            self.toks[k]['name'] = k
+            self.toks[k]['unit'] = None
+            self.toks[k]['help'] = None
+            self.toks[k]['default'] = {'Jupiter': None, 'Saturn': None, 'Uranus': None, 'Neptune': None}
+        return (key, value)
+
+    def display(self):
+        printout = self.show()
+        print(printout)
+
+    def show(self):
         """Returns string containing configuration"""
         s = 'Run parameters:\n'
         keys = self.toks.keys()
         keys.sort()
         for key in keys:
             s += '\t{:15s}:  {}\n'.format(key, str(getattr(self, self.toks[key]['name'])))
-        if not return_only:
-            print(s)
         return s

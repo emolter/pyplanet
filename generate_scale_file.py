@@ -4,7 +4,7 @@ import sys
 import atmosphere
 
 
-def generate(planet, constituent_list, value_list, calc_type='generate_calc', mode='mcmc', output_filename='Scratch/scale.dat', include_P=True):
+def generate(planet, constituent_list, value_list, calc_type='generate_calc', mode='mcmc', config='config.par', output_filename='Scratch/scale.dat', include_P=True):
     """
     Only need to include those constituents that change.
     Can include pressure (include_P) or not (just helpful for plotting - it gets ignored)
@@ -21,7 +21,7 @@ def generate(planet, constituent_list, value_list, calc_type='generate_calc', mo
     __import__(calc_type)
     generate_calc = sys.modules[calc_type]
 
-    atm = atmosphere.Atmosphere(planet, mode=mode, config='planet', log=None, plot=False)
+    atm = atmosphere.Atmosphere(planet, mode=mode, config=config, log=None, plot=False)
     atm.run()
     atmospheric_pressure = atm.gas[atm.config.C['P']]
     atmospheric_temperature = atm.gas[atm.config.C['T']]
