@@ -59,7 +59,7 @@ def regrid(atm, regridType=None, Pmin=None, Pmax=None):
 
     # ## Extrapolate gas if needed
     if fillval in gas:
-        atm.computeProp(False)
+        atm.computeProp()
         gas = extrapolate(gas, fillval, atm)
     if fillval in gas:
         raise ValueError("fillval still in gas!")
