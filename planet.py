@@ -38,7 +38,6 @@ class Planet:
         self.imSize = None
 
         print('Planetary modeling  (ver {})'.format(version))
-
         if self.planet not in planet_list:
             print("{} not found.".format(self.planet))
             return
@@ -63,7 +62,7 @@ class Planet:
         config = os.path.join(self.planet, config)
         if self.verbose:
             print('Reading config file:  ', config)
-            print("\t'X.config.display()' to see config parameters (where X in the instance name, e.g. 'j').")
+            print("\t'j.config.display()' to see config parameters.")
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         if self.initialize:
