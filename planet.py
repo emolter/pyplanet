@@ -62,7 +62,7 @@ class Planet:
         config = os.path.join(self.planet, config)
         if self.verbose:
             print('Reading config file:  ', config)
-            print("\t'j.config.display()' to see config parameters.")
+            print("\t'{}.config.display()' to see config parameters.".format(name[0].lower()))
         self.config = pcfg.planetConfig(self.planet, configFile=config, log=self.log)
 
         if self.initialize:
@@ -109,32 +109,31 @@ class Planet:
         self.data_return.f = freqs
 
         #  ##Set b, etc
-        b, outType = self.set_b(b, block)
+        b = self.set_b(b, block)
         self.data_return.b = b
-        if outType == 'Image' and len(freqs) > 1:
+        if self.outType == 'Image' and len(freqs) > 1:
             print('Warning:  Image must be at only one frequency')
             print('Using {} {}'.format(freqs[0], freqUnit))
             self.freqs = list(freqs[0])
             freqs = self.freqs
         if self.verbose == 'loud':
-            print('outType = {}'.format(outType))
+            print('outType = {}'.format(self.outType))
 
-        #  ##Start
-        runStart = datetime.datetime.now()
+        # ##Initialize other stuff
         self.Tb = []
         btmp = ''
         self.rNorm = None
         self.tip = None
         self.rotate = None
-        if outType == 'Image':  # We now treat it as an image at one frequency
+        if self.outType == 'Image':  # We now treat it as an image at one frequency
             if self.verbose == 'loud':
                 print('imgSize = {} x {}'.format(self.imSize[0], self.imSize[1]))
             imtmp = []
             if abs(block[1]) > 1:
                 btmp = '_{:02d}of{:02d}'.format(block[0], abs(block[1]))
-            else:
-                btmp = ''
 
+        #  ##Start b loop
+        runStart = datetime.datetime.now()
         for i, bv in enumerate(b):
             if self.verbose == 'loud':
                 print('{} of {} (view [{:.4f}, {:.4f}])  '.format(i + 1, len(b), bv[0], bv[1]), end='')
@@ -146,7 +145,7 @@ class Planet:
                     self.tip = self.bright.travel.tip
                 if self.rotate is None:
                     self.rotate = self.bright.travel.rotate
-            if outType == 'Image':
+            if self.outType == 'Image':
                 imtmp.append(Tbt[0])
                 if not (i + 1) % self.imSize[0]:
                     self.Tb.append(imtmp)
@@ -165,12 +164,12 @@ class Planet:
         if self.write_output_files:
             outputFile = 'Output/{}_{}{}_{}.dat'.format(self.planet, self.outType, btmp, runStart.strftime("%Y%m%d_%H%M"))
             if self.verbose == 'loud':
-                print('\nWriting {} data to {}'.format(outType, datFile))
-            self.__setHeader__(missed_planet)
-            self.fIO.write(outputFile, outType, freqs, freqUnit, b, self.Tb, self.header)
+                print('\nWriting {} data to {}'.format(self.outType, datFile))
+            self.set_header(missed_planet)
+            self.fIO.write(outputFile, self.outType, freqs, freqUnit, b, self.Tb, self.header)
 
         #  ##Plot if profile
-        if self.plot and outType == 'Profile':
+        if self.plot and self.outType == 'Profile':
             plt.figure("Profile")
             Tbtr = np.transpose(self.Tb)
             for j in range(len(freqs)):
@@ -204,7 +203,7 @@ class Planet:
         for k in self.state_vars:
             print('\t{}:  {}'.format(k, getattr(self, k)))
 
-    def __setHeader__(self, missed_planet):
+    def set_header(self, missed_planet):
         if missed_planet:
             self.header['res'] = '# res not set\n'
             self.header['orientation'] = '# orientation not set\n'
@@ -235,12 +234,20 @@ class Planet:
                'stamp':  small image of region
                'disc':  disc-averaged
            outType can be 'image', 'spectrum', 'profile'
-           b, bType and outType get set
-           bType is never used anywhere..."""
+           bType and outType get set as attributes
+           b is list of ordered pairs on return"""
         self.header['b'] = '# b request:  {}  {}\n'.format(str(b), str(block))
 
         self.imSize = None
-        if type(b) == float:  # this generates a grid at that spacing and blocking
+        if len(np.shape(b)) == 2:  # This is just a list of b pairs, so return.
+            self.bType = 'points'
+            if len(b) > 10 and isinstance(block, str):  # This allows the "profile override"
+                self.outType = 'Profile'
+            else:
+                self.outType = 'Spectrum'
+            return b
+
+        if isinstance(b, float):  # this generates a grid at that spacing and blocking
             bType = 'image'
             outType = 'Image'
             pb = []
@@ -258,51 +265,38 @@ class Planet:
                     pb.append([vcol, vrow])
             b = pb
             self.imSize = [len(grid), len(b) / len(grid)]
-        elif type(b) == str:
+        elif isinstance(b, str) and b.lower() in ['disc', 'stamp']:
             bType = b.lower()
-            if bType not in ['disc', 'stamp']:
-                raise ValueError('Invalid b request string')
             if bType == 'disc':
                 b = [[0.0, 0.0]]
                 outType = 'Spectrum'
-                print('Setting to disc-average')
             elif bType == 'stamp':
                 outType = 'Image'
                 print('Setting to postage stamp.  Need more information')
-                try:
-                    bres = float(raw_input('...Input postage stamp resolution in b-units:  '))
-                except ValueError:
-                    bres = None
-                bxmin, bxmax = raw_input('...Input bx_min, bx_max:  ').split(',')
-                try:
-                    bxmin = float(bxmin)
-                    bxmax = float(bxmax)
-                except ValueError:
-                    bres = None
-                bymin, bymax = raw_input('...Input by_min, by_max:  ').split(',')
-                try:
-                    bymin = float(bymin)
-                    bymax = float(bymax)
-                except ValueError:
-                    bres = None
-                if bres:
-                    pb = []
-                    for x in np.arange(bxmin, bxmax + bres / 2.0, bres):
-                        for y in np.arange(bymin, bymax + bres / 2.0, bres):
-                            pb.append([y, x])
-                    b = pb
-                    xbr = len(np.arange(bymin, bymax + bres / 2.0, bres))
-                    self.imSize = [xbr, len(b) / xbr]
-        elif len(np.shape(b)) == 1:     # this makes:
+                bres = float(raw_input('...Input postage stamp resolution in b-units:  '))
+                bx = raw_input('...Input bx_min, bx_max:  ').split(',')
+                bx = [float(x) for x in bx]
+                by = raw_input('...Input by_min, by_max:  ').split(',')
+                by = [float(x) for x in by]
+                pb = []
+                for x in np.arange(bx[0], bx[1] + bres / 2.0, bres):
+                    for y in np.arange(by[0], by[1] + bres / 2.0, bres):
+                        pb.append([y, x])
+                b = pb
+                xbr = len(np.arange(by[0], by[1] + bres / 2.0, bres))
+                self.imSize = [xbr, len(b) / xbr]
+        elif len(np.shape(b)) == 1:     # it is a vector
             pb = []
-            if len(b) == 2:
+            if len(b) == 2:  # it is one b-point
                 bType = 'points'
                 outType = 'Spectrum'
-                pb.append(b)            # ...data at one location
-            elif len(b) > 3:
+                pb.append(b)
+            elif len(b) > 3:  # angle, start, stop, step
                 bType = 'line'
-                outType = 'Profile'
-                outType = 'Spectrum'
+                if isinstance(block, str):
+                    outType = 'Profile'
+                else:
+                    outType = 'Spectrum'
                 angle = utils.d2r(b[0])
                 del b[0]
                 if len(b) == 3:
@@ -312,13 +306,6 @@ class Planet:
             else:
                 raise ValueError('Invalid b request.')
             b = pb
-        elif len(np.shape(b)) == 2:
-            bType = 'points'
-            if len(b) > 10:
-                outType = 'Profile'
-                outType = 'Spectrum'
-            else:
-                outType = 'Spectrum'
         else:
             raise ValueError('Invalid format for b.')
 
@@ -328,7 +315,7 @@ class Planet:
         self.outType = outType
         self.bType = bType
 
-        return b, outType
+        return b
 
     def set_freq(self, freqs, freqUnit):
         """ Internal processing of frequency list.
