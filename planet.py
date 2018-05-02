@@ -315,7 +315,7 @@ class Planet:
 
     def set_freq(self, freqs, freqUnit):
         """ Process frequency request.
-            Return a list converted from freqUnit to processingFreqUnit.
+            Return a list converted from freqUnit to processingFreqUnit and reassigns freqUnit procUnit.
 
             Parameters:
             ------------
@@ -355,4 +355,4 @@ class Planet:
         utils.log(self.log, s, self.verbose)
         self.freqs = freqs
         self.freqUnit = utils.proc_unit(freqUnit)
-        return freqs, utils.proc_unit(freqUnit)
+        return freqs, self.freqUnit
