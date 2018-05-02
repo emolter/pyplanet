@@ -226,15 +226,21 @@ class Planet:
 
     def set_b(self, b, block):
         """Process b request.
-           b has a number of options for different bTypes:
-               'points':  discrete number of points
-               'line':  radial lines. csv list of |b| or 'start:stop:step' ['angle=x', default=0.0]
-               'image':  full image
-               'stamp':  small image of region
-               'disc':  disc-averaged
-           outType can be 'image', 'spectrum', 'profile'
-           bType, outType, and imSize get set as attributes
-           b is list of ordered pairs on return"""
+           bType (see below), outType ('image', 'spectrum', 'profile'), and imSize get set as attributes
+           b is list of ordered pairs on return
+
+           Parameters:
+           ------------
+           b:   list of ordered pairs -> returns that list (bType='points')
+                float -> returns a full grid (bType='image')
+                'disc' -> returns [[0.0, 0.0]] (bType='disc')
+                'stamp' -> returns grid of postage stamp (bType='stamp')
+                string defining line: csv list of values or range as <start>:<stop>:<step>
+                                      optional ',angle=DEG' [defaults to 0.0]
+                                      (bType='line')
+           block:  image block as pair, e.g. [4, 10] is "block 4 of 10"
+                   if not image, can define block='profile' (default is 'spectrum')
+           """
         self.header['b'] = '# b request:  {}  {}\n'.format(str(b), str(block))
         self.imSize = None
         self.outType = 'spectrum'
@@ -291,7 +297,7 @@ class Planet:
             return b
 
         # It is a line request
-        line = {'mag_b': None, 'angle_b': 0.0, 'range': ':' in self.bType}
+        line = {'mag_b': [], 'angle_b': 0.0, 'range': ':' in self.bType}
         cmd = self.bType.split(',')
         self.bType = 'line'
         for v in cmd:
@@ -308,7 +314,18 @@ class Planet:
         return b
 
     def set_freq(self, freqs, freqUnit):
-        """ Process frequency request
+        """ Process frequency request.
+            Return a list converted from freqUnit to processingFreqUnit.
+
+            Parameters:
+            ------------
+            freqs:  list -> returns that list
+                    csv list of values -> converts to list
+                    float/int -> returns that one value as a list
+                    '<start>:<stop>:<step>' -> returns arange of that
+                    '<start>;<stop>;<nstep>' -> returns logspace of that
+                    '<filename>' -> returns loadtxt of that
+            freqUnit:  frequency unit of supplied freqs
         """
         self.header['freqs'] = '# freqs request: {} {}\n'.format(str(freqs), freqUnit)
         # ## Process frequency range "request"
