@@ -1,0 +1,52 @@
+import numpy as np
+def gen_emcee_input():
+    planet = 'Neptune'
+    # refData - reference spectrum; should have three columns: frequencies, Tb, and Tb_error
+    # scaleFile - name of tweak file read by config.par
+    refData = './emceeTest/refSpectrum.dat'
+    scaleFile = './Scratch/scale.dat'
+    
+    b = 'disc'
+    
+    ### Emcee Inputs
+    # Parameters:
+    # names - list of identifying names for the free parameters that emcee guesses and replaces in the scale file. Equal to fractional H2S depletion at two pressure ranges in this example. Names should be ALL CAPS.
+    # guesses = list of initial guesses to the free parameters listed in 'names' to change in scale file - equal to the equilibrium value of H2S in this example
+    # limits = list of values walkers are limited to search - between 0% to 120% abundance of H2S in this example
+    # nwalker = number of Goodman & Weare walkers
+    # threads = if > 1 will implement parallelization
+    # nsteps = number of iterations to take before stopping - may append to prior runs by running emcee_append
+    parameters = {'names':    ['H2S'],
+                  'guesses':  [1.0],
+                  'limits':   [[0.25,1.75]]}
+    
+    nwalkers = 30
+    threads = 1
+    nsteps = 100
+    
+    ### Data output files for coninuing or analyzing emcee runs. Files must not exist prior to running a new emcee run.
+    outdatafile = './emceeTest/out.dat'
+    lnprobfile = './emceeTest/lnprobfile.dat'
+    
+    
+    
+    # extract frequencies from the data
+    refd = np.genfromtxt(refData, comments = '#')
+    freqs = list(refd.T[0])
+    
+    # Make everything a dict
+    inp = {
+           'planet':        planet,
+           'refData':       refData,
+           'scaleFile':     scaleFile,
+           'freqs':         freqs,
+           'b':             b,
+           'parameters':    parameters,
+           'nwalkers':      nwalkers,
+           'threads':       threads,
+           'nsteps':        nsteps,
+           'outdatafile':   outdatafile,
+           'lnprobfile':    lnprobfile}
+    
+    print(inp['parameters'])
+    return inp

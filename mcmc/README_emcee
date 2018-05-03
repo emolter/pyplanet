@@ -1,0 +1,64 @@
+How to run emcee with Dave's RT code: pyplanet
+
+--- v0.1 ---
+
+1. Set up your data/reference file. This needs to be in a three column format: freq (GHz) | T_b (K) | T_error (K). For an example, see emceeTest/refSpectrum.dat
+
+2. Open mcmc/emcee_input.py - This is where you will define the planet, reference files, and parameters that mcmc will read and wor with. The mose important thing is to make sure freqs contains the same freqs that are in your data/reference file. 1 or more parameters may be defined. Make sure these parameter names are in ALL-CAPS, as that is how they are called in planet/atmosphere.
+
+3. Run a single RT run for your default atmosphere that generates the alpha (opacity) files; make sure your frequencies are the same as those you will use in your actual mcmc run. In a python terminal, run:
+
+############
+
+import planet
+
+n = planet.Planet('neptune', mode='normal', generate_alpha='True', plot=False)
+freqs = [] ### your frequencies here
+n.run(freqs = freqs, b = 'disc')
+
+############
+
+4. Set up your scale.dat file. This is the file that changes the opacity by the given fraction at each fraction level. This is the 'linearization' assumption - perturbations in abundances vary the opactiy linearly. Open generate_scale_file.py - this is going to act as the new 'Tweak File' for mcmc purposes and you can change it depending on how you. I have no good way of making this more user friendly since you will probably have specific things you want ot run.
+
+generate(planet, constituent_list, value_list, output_filename) is the function that generates scale.dat; get_value() gets the fractional abundance/opacity that you wish to modify in each layer.
+
+Using the current generate_scale_file.py: to make scale.dat, in a python terminal run:
+
+############
+
+import generate_scale_file as gen
+gen.generate('neptune', ['H2S'], [0.7], output_filename='Scratch/scale.dat')
+
+############
+
+You can really enter whatever value (e.g. [0.7]) you want at this point since mcmc will update the value after each step. I would strongly recommend you also compare your default atmopsheric profile with the scaled one to make sure everything looks as expected before proceeding. Once everything looks good, you can begin mcmc!
+
+5. Double check your emcee_input file looks correct. To run mcmc, in a python terminal enter:
+
+############
+
+import mcmc.emcee_atm as mc
+mc.run_emcee_spectrum_new()
+
+############
+
+6. To append to an existing run, in a python terminal enter:
+
+############
+
+import mcmc.emcee_atm as mc
+mc.run_emcee_spectrum_append()
+
+############
+
+7. These is some minimal functionality available for post-mcmc run statistics and plotting. To plot the burnin and get the best values, run something like this in a python terminal. plot_burnin will plot each walkers' journey as they sample parameter space at each step. best_fit will return the best fit for each parameter and the 1-sigma errors.
+
+############
+
+import mcmc.emcee_atm as mc
+samples, ndim, nwalkers = mc.read_emcee_datfile('./emceeTest/out.dat')
+mc.plot_burnin(samples, ['H2S'], 1, 100)
+mc.best_fit(samples, ['H2S'], 100)
+
+#############
+
