@@ -8,21 +8,22 @@ import utils
 class FileIO(object):
     def __init__(self, outputType):
         self.outputType = outputType
+        self.directory = 'Output'
 
     def write(self, outputFile, outType, freqs, freqUnit, b, Tb, header):
         with open(outputFile, 'w') as fp:
-            self.__writeHeader(header, fp)
+            self.writeHeader(header, fp)
             if outType.lower() == 'image':
-                self.__writeImage(fp, Tb)
+                self.writeImage(fp, Tb)
             elif outType.lower() == 'spectrum':
-                self.__writeSpectrum(fp, freqs, freqUnit, b, Tb)
+                self.writeSpectrum(fp, freqs, freqUnit, b, Tb)
             elif outType.lower() == 'profile':
-                self.__writeProfile(fp, freqs, freqUnit, b, Tb)
+                self.writeProfile(fp, freqs, freqUnit, b, Tb)
             else:
                 print("Invalid output type: {}".format(outType))
         return outputFile
 
-    def __writeSpectrum(self, fp, freqs, freqUnit, b, Tb):
+    def writeSpectrum(self, fp, freqs, freqUnit, b, Tb):
         fp_lineoutput = open('specoutputline.dat', 'w')
         if self.outputType.lower() == 'frequency':
             s = '# {}  K@b  \t'.format(freqUnit)
@@ -51,7 +52,7 @@ class FileIO(object):
             fp.write(s)
         fp_lineoutput.close()
 
-    def __writeProfile(self, fp, freqs, freqUnit, b, Tb):
+    def writeProfile(self, fp, freqs, freqUnit, b, Tb):
         if self.outputType == 'frequency':
             s = '# b  K@{} \t'.format(freqUnit)
         elif self.outputType == 'wavelength':
@@ -78,7 +79,7 @@ class FileIO(object):
             s += '\n'
             fp.write(s)
 
-    def __writeImage(self, fp, Tb):
+    def writeImage(self, fp, Tb):
         for data in Tb:
             s = ''
             for d in data:
@@ -86,46 +87,43 @@ class FileIO(object):
             s += '\n'
             fp.write(s)
 
-    def __writeHeader(self, header, fp):
-        for hdr in header:
+    def writeHeader(self, header, fp):
+        alpha_header = sorted(header.keys())
+        for hdr in alpha_header:
             fp.write(header[hdr])
 
-    def flist(self, fd=None, directory=None):
+    def flist(self, fd=None, directory=None, tag='dat'):
         """This generates the list of filenames to be opened - doesn't check for existence"""
         if directory is not None:
             usedir = directory
         else:
             usedir = self.directory
-        file_list = utils.ls(directory=usedir, show=False, returnList=True)
+        file_list = utils.ls(directory=usedir, tag=tag, show=False, returnList=True)
 
-        get_fn = True
+        ifile = []
         files = []
         if type(fd) == int:
             ifile = [fd]
-        elif fd == '?' or fd is None:
+        elif fd is None:
             for i, fn in enumerate(file_list):
                 print('{}  -  {}'.format(i, fn))
             sfile = raw_input('File numbers: ')
+            split_on = None
             if '-' in sfile:
                 sfile = sfile.split('-')
                 ifile = range(int(sfile[0]), int(sfile[1]) + 1)
             else:
                 if ',' in sfile:
-                    sfile = sfile.split(',')
-                else:
-                    sfile = sfile.split()
-                ifile = []
-                for i in sfile:
-                    ifile.append(int(i))
+                    split_on = ','
+                ifile = [int(x) for x in sfile.split(split_on)]
         elif type(fd) == list and type(fd[0]) == int:
             ifile = fd
         elif type(fd) == list and type(fd[0]) == str:
             files = fd
         else:
-            get_fn = False
             files = [fd]
 
-        if get_fn:
+        if bool(len(ifile)):
             for i, fn in enumerate(file_list):
                 if i in ifile:
                     files.append(fn)

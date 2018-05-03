@@ -101,13 +101,14 @@ def close(logfp):
         logfp.close()
 
 
-def ls(directory='Output', show=True, returnList=False):
+def ls(directory='Output', tag='dat', show=True, returnList=False):
     """Generates file list for plotTB and writeWavel"""
     filelist = os.listdir(directory)
     files = []
     i = 0
     for fff in filelist:
-        if fff[0] != '.':
+        show_tag = tag is None or (isinstance(tag, str) and tag in fff)
+        if fff[0] != '.' and show_tag:
             files.append(os.path.join(directory, fff))
             if show:
                 print('{}:  {}'.format(i, files[i]))
