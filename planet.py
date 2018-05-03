@@ -337,7 +337,7 @@ class Planet:
             freqs = [float(freqs)]
         elif isinstance(freqs, str) and ':' in freqs:
             fstart, fstop, fstep = [float(x) for x in freqs.split(':')]
-            freqs = list(np.arange(fstart, fstop, fstep))
+            freqs = list(np.arange(fstart, fstop + fstep / 2.0, fstep))
         elif isinstance(freqs, str) and ';' in freqs:
             fstart, fstop, nstep = [float(x) for x in freqs.split(';')]
             freqs = list(np.logspace(np.log10(fstart), np.log10(fstop), nstep))

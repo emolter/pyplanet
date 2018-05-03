@@ -201,7 +201,8 @@ class Atmosphere:
             self.gas = np.fliplr(self.gas)
             monotonic = np.all(np.diff(self.gas[self.config.C['P']]) > 0.0)
         if not monotonic:
-            print("Error in ", gasFile, ".  Pressure not monotonically increasing")
+            print("Error in ", gasFile)
+            raise ValueError("Pressure not monotonically increasing.")
 
         # ## Renormalize so that deepest z is 0 and set DZ
         self.renorm_z('gas')
@@ -265,7 +266,8 @@ class Atmosphere:
             self.cloud = np.fliplr(self.cloud)
             monotonic = np.all(np.diff(self.cloud[self.config.Cl['P']]) > 0.0)
         if not monotonic:
-            print("Error in ", cloudFile, ".  Pressure not monotonically increasing")
+            print("Error in ", cloudFile)
+            raise ValueError("Pressure not monotonically increasing")
 
         # ## Renormalize so that deepest z is 0 and set DZ
         self.renorm_z('cloud')
@@ -299,7 +301,7 @@ class Atmosphere:
             tweakModule = sys.modules[self.config.tweakFile]
         except SyntaxError:
             utils.log(self.logFile, "Syntax Error:  check " + self.config.tweakFile, True)
-            return 0
+            raise ValueError("Error in tweakFile")
 
         # Run module then log
         self.tweakComment, self.gas, self.cloud = tweakModule.modify(self.gas, self.cloud, self.config.C, self.config.Cl)
@@ -308,13 +310,13 @@ class Atmosphere:
             print(self.tweakComment)
             print('---')
         utils.log(self.logFile, self.tweakComment, False)
-        _tf = os.path.join(self.config.path, self.config.tweakFile + '.py')
-        _tp = open(_tf, 'r')
-        dt = _tp.read()
-        utils.log(self.logFile, '======================' + _tf + '=====================', False)
+        tf = os.path.join(self.config.path, self.config.tweakFile + '.py')
+        tp = open(tf, 'r')
+        dt = tp.read()
+        utils.log(self.logFile, '======================' + tf + '=====================', False)
         utils.log(self.logFile, dt, False)
         utils.log(self.logFile, '====================================================================', False)
-        _tp.close()
+        tp.close()
 
     def computeProp(self):
         """This module computes derived atmospheric properties (makes self.layerProperty)"""
@@ -386,22 +388,12 @@ class Atmosphere:
             self.layerProperty[self.config.LP['g']].append(little_g)
         self.layerProperty = np.array(self.layerProperty)
 
-    def __isPresent__(self, c, tiny=1.0E-30):
-        """This checks to see if a constituent is there and sets 0.0 or negative values to tiny.  This is generally for log plotting"""
-        vsum = 0.0
-        present = False
-        vnew = []
-        for v in c:
-            vsum += v
-            if v == 0.0:
-                vnew.append(tiny)
-            elif v < 0.0:
-                vnew.append(tiny)
-            else:
-                vnew.append(v)
-                present = True
-
-        return present, vnew
+    def is_present(self, c, tiny=1.0E-30):
+        """This checks to see if a constituent is there and sets 0.0 or negative values to tiny.
+           This is generally for log plotting."""
+        v = [tiny if x <= tiny else x for x in c]
+        present = bool(len(np.where(np.array(v) > tiny)[0]))
+        return present, v
 
     def plotTP(self, plot='auto'):
         """Plot the T-P profile"""
@@ -422,7 +414,7 @@ class Atmosphere:
             plt.figure(self.planet + ': clouds')
         plt.title(self.planet + ': clouds')
         for cloud in self.config.Cl:
-            present, cl = self.__isPresent__(self.cloud[self.config.Cl[cloud]])
+            present, cl = self.is_present(self.cloud[self.config.Cl[cloud]])
             if cloud in dontPlot or not present:
                 continue
             plt.loglog(cl, self.cloud[self.config.Cl['P']], label=cloud)
@@ -442,7 +434,7 @@ class Atmosphere:
             plt.figure(self.planet + ': gas')
         plt.title(self.planet + ': gas')
         for gas in self.config.C:
-            present, g = self.__isPresent__(self.gas[self.config.C[gas]])
+            present, g = self.is_present(self.gas[self.config.C[gas]])
             if gas in dontPlot or not present:
                 continue
             plt.loglog(g, self.gas[self.config.C['P']], label=gas)
@@ -461,7 +453,7 @@ class Atmosphere:
             plt.figure(self.planet + ': Properties')
         plt.title(self.planet + ': other')
         for other in self.config.LP:
-            present, g = self.__isPresent__(self.layerProperty[self.config.LP[other]])
+            present, g = self.is_present(self.layerProperty[self.config.LP[other]])
             if other in dontPlot or not present:
                 continue
             plt.loglog(g, self.gas[self.config.C['P']], label=other)
