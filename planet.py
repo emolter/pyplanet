@@ -301,12 +301,13 @@ class Planet:
         cmd = self.bType.split(',')
         self.bType = 'line'
         for v in cmd:
+            if '<' in v:
+                line['angle_b'] = utils.d2r(float(v.split('<')[1]))
+                v = v.split('<')[0]
             if ':' in v:
                 start, stop, step = [float(x) for x in v.split(':')]
                 line['mag_b'] = np.arange(start, stop + step / 2.0, step)
-            elif 'angle' in v:
-                line['angle_b'] = utils.d2r(float(v.split('=')[1]))
-            elif not line['range']:
+            if not line['range'] and len(v):
                 line['mag_b'].append(float(v))
         b = []
         for v in line['mag_b']:
