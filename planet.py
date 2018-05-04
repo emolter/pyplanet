@@ -233,7 +233,7 @@ class Planet:
            ------------
            b:   list of ordered pairs -> returns that list (bType='points')
                 float -> returns a full grid (bType='image')
-                'disc' -> returns [[0.0, 0.0]] (bType='disc')
+                'disc' (or 'disk') -> returns [[0.0, 0.0]] (bType='disc')
                 'stamp' -> returns grid of postage stamp (bType='stamp')
                 string defining line: csv list of values or range as <start>:<stop>:<step>
                                       optional ',angle=DEG' [defaults to 0.0]
@@ -279,7 +279,8 @@ class Planet:
             raise ValueError("Invalid b request.")
         self.bType = b.lower()
 
-        if self.bType == 'disc':
+        if self.bType == 'disc' or self.bType == 'disk':
+            self.bType = 'disc'
             return [[0.0, 0.0]]
 
         if self.bType == 'stamp':
