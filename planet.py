@@ -246,7 +246,13 @@ class Planet:
         self.outType = 'spectrum'
         if isinstance(block, str) and block[0].lower() == 'p':
             self.outType = 'profile'
+        # Do some pre-processing to handle line vs single point and ndarrays
+        if len(np.shape(b)) == 1 and len(b) > 2:
+            b = ','.join([str(x) for x in b])
+        if len(b.split(',')) == 2:
+            b = b.split(',')
 
+        # Handle lists/arrays
         if len(np.shape(b)) > 0:
             if len(np.shape(b)) == 1 and len(b) == 2:
                 b = [b]
@@ -333,6 +339,8 @@ class Planet:
         # ## Process frequency range "request"
         if isinstance(freqs, list):
             pass
+        elif isinstance(freqs, np.ndarray):
+            freqs = list(freqs)
         elif isinstance(freqs, str) and ',' in freqs:
             freqs = [float(x) for x in freqs.split(',')]
         elif isinstance(freqs, (float, int)):
