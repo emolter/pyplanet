@@ -33,8 +33,7 @@ class FileIO(object):
             s = '# {}    cm    K@b  \t'.format(freqUnit)
         for i, bv in enumerate(b):
             s += '({:5.3f},{:5.3f})\t'.format(bv[0], bv[1])
-        s = s.strip('\t')
-        s += '\n'
+        s = s.strip('\t') + '\n'
         fp.write(s)
         for i, f in enumerate(freqs):
             wlcm = 100.0 * utils.speedOfLight / (f * utils.Units[freqUnit])
@@ -46,8 +45,7 @@ class FileIO(object):
                 s = '{:.2f}     {:.4f} \t '.format(f, wlcm)
             for j in range(len(b)):
                 s += '  {:7.2f}  \t'.format(Tb[j][i])
-            s = s.strip()
-            s += '\n'
+            s = s.strip() + '\n'
             fp_lineoutput.write(s)
             fp.write(s)
         fp_lineoutput.close()
@@ -67,8 +65,7 @@ class FileIO(object):
                 s += '  {:.4f}   \t'.format(wlcm)
             else:
                 s += ' {:.2f},{:.4f}\t'.format(fv, wlcm)
-        s.strip('\t')
-        s += '\n'
+        s.strip('\t') + '\n'
         fp.write(s)
         bs = []
         for i, bv in enumerate(b):
@@ -76,7 +73,7 @@ class FileIO(object):
             bs.append(np.sqrt(bv[0]**2 + bv[1]**2))
             for j in range(len(freqs)):
                 s += ' {:7.2f}\t '.format(Tb[i][j])
-            s += '\n'
+            s = s.strip() + '\n'
             fp.write(s)
 
     def writeImage(self, fp, Tb):
@@ -84,7 +81,7 @@ class FileIO(object):
             s = ''
             for d in data:
                 s += '{:7.2f}\t'.format(d)
-            s += '\n'
+            s = s.strip() + '\n'
             fp.write(s)
 
     def writeHeader(self, header, fp):
@@ -135,7 +132,7 @@ class FileIO(object):
            fn = filename to read (but then ignores directory) | '?', '.' or None | integer [None]
            directory = subdirectory for data (not used if filename given) ['Output']"""
 
-        ftypes = ['Image', 'Profile', 'Spectrum']
+        ftypes = ['image', 'profile', 'spectrum']
         if fd is None:
             if directory is not None:
                 usedir = directory
@@ -185,7 +182,7 @@ class FileIO(object):
         b = []      # b-vectors (resolution for images)
         bmag = []   # b-mag (resolution for images)
         # ## Now we have valid files and the header, now read in ftype
-        if self.ftype == 'Image':
+        if self.ftype == 'image':
             imRow = imCol = 0
             b = self.resolution
             bmag = b
@@ -221,7 +218,7 @@ class FileIO(object):
                 self.y.append(self.xyextents[2] + i * self.resolution)
             self.x = np.array(self.x)
             self.y = np.array(self.y)
-        elif self.ftype == 'Spectrum' or self.ftype == 'Profile':
+        elif self.ftype == 'spectrum' or self.ftype == 'profile':
             # indata = []
             n = 0
             validData = True
@@ -234,7 +231,7 @@ class FileIO(object):
                         ylabel = labels[2].split('@')[1]
                         del(labels[0:3])
                         curveLabels = labels
-                        if self.ftype == 'Spectrum':
+                        if self.ftype == 'spectrum':
                             print('b = ', end='')
                             for bb in labels:
                                 print(' ' + bb, end='')
@@ -245,7 +242,7 @@ class FileIO(object):
                             b = np.array(b)
                             bmag = np.array(bmag)
                             print('')
-                        elif self.ftype == 'Profile':
+                        elif self.ftype == 'profile':
                             print('Freq = ', end='')
                             for f in labels:
                                 try:
@@ -266,10 +263,10 @@ class FileIO(object):
                             except ValueError:
                                 dat[i] = dat[i]
                                 validData = False
-                        if self.ftype == 'Spectrum':
+                        if self.ftype == 'spectrum':
                             freqs.append(dat[0])
                             wavel.append((utils.speedOfLight / 1.0E7) / dat[0])
-                        elif self.ftype == 'Profile':
+                        elif self.ftype == 'profile':
                             print("NEED TO READ B'S")
                         del(dat[0])
                         data.append(dat)
