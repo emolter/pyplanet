@@ -50,27 +50,27 @@ class Ray:
             self.doppler = doppler
 
 
-def __computeAspect__(Q, f=1.0):
+def computeAspect(Q, f=1.0):
     """Convert the orientation vector [posAng,lat_planetographic] to the rotation angles"""
     tip = -Q[0] * np.pi / 180.0   # 'tip' to north
     rotate = -math.atan(math.tan(Q[1] * np.pi / 180.0) * (1.0 - f)**2)   # 'rotate' the sub-earth planetographic latitude
     return tip, rotate   # planetocentric coordinates
 
 
-def __rotate2planet__(rotate, tip, b):
+def rotate2planet(rotate, tip, b):
     """separate out to keep use consistent!"""
     # out_vec = shape.rotZ(tip,shape.rotX(rotate,b))  # the first way, which is seemingly incorrect
     out_vec = shape.rotX(rotate, shape.rotZ(tip, b))
     return out_vec
 
 
-def __rotate2obs__(rotate, tip, b):
-    """This should be opposite to __rotate2planet__..."""
+def rotate2obs(rotate, tip, b):
+    """This should be opposite to rotate2planet..."""
     out_vec = shape.rotZ(tip, shape.rotX(rotate, b))
     return out_vec
 
 
-def __findEdge__(atm, b, rNorm, tip, rotate, gtype, printdot=False):
+def findEdge(atm, b, rNorm, tip, rotate, gtype, printdot=False):
     tmp = (b[0]**2 + b[1]**2)
     try:
         zQ_Trial = np.arange(math.sqrt(1.0 - tmp) * 1.01, 0.0, -0.005)
@@ -88,7 +88,7 @@ def __findEdge__(atm, b, rNorm, tip, rotate, gtype, printdot=False):
         # Q
         b_vec = np.array([b[0], b[1], zQ])
         # --> P
-        b_vec = __rotate2planet__(rotate, tip, b_vec)
+        b_vec = rotate2planet(rotate, tip, b_vec)
         r1 = np.linalg.norm(b_vec) * rNorm
         r_zQ_Trial.append(r1)
         # get planetocentric latitude/longitude
@@ -108,7 +108,7 @@ def __findEdge__(atm, b, rNorm, tip, rotate, gtype, printdot=False):
     try:
         zQ = np.interp(0.0, xx, yy)
         b = np.array([b[0], b[1], zQ])
-        edge = rNorm * __rotate2planet__(rotate, tip, b)
+        edge = rNorm * rotate2planet(rotate, tip, b)
     except ValueError:
         b = None
         edge = None
@@ -136,12 +136,12 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbose=False, plot=True):
     mu = math.sqrt(1.0 - b[0]**2 - b[1]**2)
 
     f = 1.0 - atm.config.Rpol / atm.config.Req
-    tip, rotate = __computeAspect__(orientation, f)
+    tip, rotate = computeAspect(orientation, f)
     if verbose:
         print('intersection:  ({:.3f}, {:.3f})    '.format(b[0], b[1]), end='')
         print('aspect:  ({:%.4f},  {:.4f})'.format(tip * 180.0 / np.pi, rotate * 180.0 / np.pi))
         print('Finding atmospheric edge', end='')
-    edge, b = __findEdge__(atm, b, rNorm, tip, rotate, gtype)
+    edge, b = findEdge(atm, b, rNorm, tip, rotate, gtype)
     if edge is None:
         return path
     r1 = np.linalg.norm(edge)
@@ -159,7 +159,7 @@ def compute_ds(atm, b, orientation=None, gtype=None, verbose=False, plot=True):
 
     # initialize - everything below is in planetocentric coordinates, so need to rotate s-vector
     start = np.array([0.0, 0.0, -1.0])
-    start = __rotate2planet__(rotate, tip, start)
+    start = rotate2planet(rotate, tip, start)
     s = [start]
     n = [geoid.n]
     r = [geoid.r]
