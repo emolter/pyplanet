@@ -301,6 +301,17 @@
                 "Neptune": "NeptuneTweak"
             }
         },
+        "scalefile": {
+            "name": "scalefile",
+            "unit": "None",
+            "help": "module used to linearly scale absorption profiles",
+            "default": {
+                "Jupiter": "calc_scale.py",
+                "Saturn": "calc_scale.py",
+                "Uranus": "calc_scale.py",
+                "Neptune": "calc_scale.py"
+            }
+        },
         "water": {
             "name": "water_p",
             "unit": "um",
