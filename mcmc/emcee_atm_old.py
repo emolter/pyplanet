@@ -11,7 +11,7 @@ import planet
 
 def get_obs_spectrum(specdatfile):
     '''Read spectrum data file
-        from ./Output/.dat 
+        from ./Output/.dat
         Should have format:
         wavelengths (GHz), Tb (K), Tb_err(K)'''
 
@@ -27,13 +27,13 @@ def get_obs_spectrum(specdatfile):
 
     return spec
 
-def get_model_spectrum(val, name, tweakFile, tweakTmp, freqs, b, par_names, limits):
+def get_model_spectrum(val, name, tweakmodule, tweakTmp, freqs, b, par_names, limits):
     '''Generate model spectrum'''
-    
-    update_tweak(tweakFile,tweakTmp,par_names, val, limits)
+
+    update_tweak(tweakmodule,tweakTmp,par_names, val, limits)
     plan = planet.planet(name, plot=False)
     datFile = plan.run(freqs=freqs, b=b)
-    
+
     spec = []
     with open(datFile, 'r') as tmp:
         for line in tmp:
@@ -47,16 +47,16 @@ def get_model_spectrum(val, name, tweakFile, tweakTmp, freqs, b, par_names, limi
     os.remove(datFile)
     return spec
 
-def update_tweak(tweakFile, tweakTmp, par_names, guess, limits):
+def update_tweak(tweakmodule, tweakTmp, par_names, guess, limits):
     '''Update tweak file val with new val'''
 
-    copyfile(tweakTmp, tweakFile)
+    copyfile(tweakTmp, tweakmodule)
     for i in range(len(par_names)):
-        f = open(tweakFile, 'r')
+        f = open(tweakmodule, 'r')
         filedata = f.read()
         f.close()
         newdata = filedata.replace(par_names[i], str(guess[i]))
-        f = open(tweakFile, 'w')
+        f = open(tweakmodule, 'w')
         f.write(newdata)
         f.close()
     f.close()
@@ -73,9 +73,9 @@ def lnprior(theta,limits): #flat priors
     if tmp==1: return 0.0
     else: return -np.inf
 
-def lnlike(theta, x, y, yerr, name, tweakFile, tweakTmp, freqs, b, par_names, limits):
+def lnlike(theta, x, y, yerr, name, tweakmodule, tweakTmp, freqs, b, par_names, limits):
     parvals=theta
-    spec = get_model_spectrum(parvals, name, tweakFile, tweakTmp, freqs, b, par_names, limits)
+    spec = get_model_spectrum(parvals, name, tweakmodule, tweakTmp, freqs, b, par_names, limits)
     ymodel = spec[:,1]
 
     sigsq=yerr**2
@@ -83,11 +83,11 @@ def lnlike(theta, x, y, yerr, name, tweakFile, tweakTmp, freqs, b, par_names, li
     return lnP
 
 
-def lnprob(theta,x,y,yerr,name,tweakFile,tweakTmp,freqs,b,par_names, limits):
+def lnprob(theta,x,y,yerr,name,tweakmodule,tweakTmp,freqs,b,par_names, limits):
     lp = lnprior(theta,limits)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + lnlike(theta,x,y,yerr,name,tweakFile,tweakTmp,freqs,b,par_names, limits)
+    return lp + lnlike(theta,x,y,yerr,name,tweakmodule,tweakTmp,freqs,b,par_names, limits)
 
 def run_emcee_spectrum(sampler,pos, nsteps,outdatfile,lnprobfile=None):
     t0=time.time()
@@ -111,31 +111,31 @@ def run_emcee_spectrum(sampler,pos, nsteps,outdatfile,lnprobfile=None):
     return sampler
 
 def run_emcee_spectrum_new():
-    ##name='Neptune', refData='./Neptune/refSpectrum.dat', tweakFile = './Neptune/NeptuneTweak_mcmc.py', tweakTmp = './Neptune/tmp.py'
+    ##name='Neptune', refData='./Neptune/refSpectrum.dat', tweakmodule = './Neptune/NeptuneTweak_mcmc.py', tweakTmp = './Neptune/tmp.py'
     #guess=1.0, limits=[0.75,1.25],
     #    nwalker=10, threads=1, nsteps=100,
     #        outdatfile='out.dat',lnprobfile='lnprobfile.dat',lnprobfn=lnprob
-    
+
     inp = emcee_input.gen_emcee_input()
-    
+
     name = inp['planet']
     refData = inp['refData']
-    tweakFile = inp['tweakFile']
+    tweakmodule = inp['tweakmodule']
     tweakTmp = inp['tweakTmp']
-    
+
     freqs = inp['freqs']
     b = inp['b']
-    
+
     par_names = inp['parameters']['names']
     guess = inp['parameters']['guesses']
     limits = inp['parameters']['limits']
     nwalker = inp['nwalkers']
     threads = inp['threads']
     nsteps = inp['nsteps']
-    
+
     outdatfile = inp['outdatafile']
     lnprobfile = inp['lnprobfile']
-    
+
     #Check if we're going to overwrite a file
     if os.path.isfile(outdatfile):
         overwrite=False
@@ -162,7 +162,7 @@ def run_emcee_spectrum_new():
 
     pos = [guess + 1e-4*np.random.randn(ndim) for i in range(nwalker)]
 
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x,y,yerr,name,tweakFile,tweakTmp,freqs,b, par_names,limits), threads=threads)
+    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x,y,yerr,name,tweakmodule,tweakTmp,freqs,b, par_names,limits), threads=threads)
 
     f = open(outdatfile, "w")
     f.close()
@@ -170,14 +170,14 @@ def run_emcee_spectrum_new():
     return sampler
 
 def run_emcee_spectrum_append():
-    
+
     inp = emcee_input.gen_emcee_input()
-    
+
     name = inp['planet']
     refData = inp['refData']
-    tweakFile = inp['tweakFile']
+    tweakmodule = inp['tweakmodule']
     tweakTmp = inp['tweakTmp']
-    
+
     par_names = inp['parameters']['names']
     guess = inp['parameters']['guesses']
     limits = inp['parameters']['limits']
@@ -188,18 +188,18 @@ def run_emcee_spectrum_append():
     freqs = inp['freqs']
     b = inp['b']
 
-    
+
     datfile = inp['outdatafile']
     lnprobfile = inp['lnprobfile']
-    
+
     name = str.capitalize(name)
-    
-    
+
+
     obs_spec =  get_obs_spectrum(refData)
     x = obs_spec[:,0]
     y = obs_spec[:,1]
     yerr = obs_spec[:,2]
-    
+
     if os.path.isfile(datfile) is False:
         print ("{0} is not found. Did you mean to run run_emcee_spectrum_new?".format(datfile))
         return
@@ -220,7 +220,7 @@ def run_emcee_spectrum_append():
 
     samples,ndim,nwalkers=read_emcee_datfile(datfile)
     pos=samples[-1,:,:]
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x,y,yerr,name,tweakFile,tweakTmp,freqs,b, par_names,limits), threads=threads)
+    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x,y,yerr,name,tweakmodule,tweakTmp,freqs,b, par_names,limits), threads=threads)
     sampler=run_emcee_spectrum(sampler, pos, nsteps, datfile,lnprobfile=lnprobfile)
     return sampler
 
@@ -249,7 +249,7 @@ def read_emcee_datfile(datfile):
                 out=values
             else:
                 out=np.vstack((out,values))
-    
+
     nwalkers=np.max(out[:,0]) +1
     ndim=out.shape[1]-1
     samples=out[:,1:].reshape(-1,nwalkers,ndim)
@@ -266,10 +266,7 @@ def read_emcee_probfile(probfile):
             out=values
         else:
             out=np.vstack((out,values))
-    
+
     nwalkers=np.max(out[:,0]) +1
     probabilities=out[:,1].reshape(-1,nwalkers)
     return probabilities,nwalkers
-
-
-

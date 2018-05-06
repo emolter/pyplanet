@@ -98,7 +98,7 @@ class Atmosphere:
         regridded = regrid.regrid(self, regridType=regridType, Pmin=Pmin, Pmax=Pmax)
         self.nAtm = len(self.gas[0])
 
-        if tweak:  # This loads and calls the module as given in the config.par tweakfile parameter
+        if tweak:  # This loads and calls the module as given in the config.par tweakmodule parameter
             self.tweakAtm()
 
         # ## Compute other parameters that are needed
@@ -294,14 +294,14 @@ class Atmosphere:
         if self.batch_mode:
             return 0
 
-        # Import tweakFile
+        # Import tweakmodule
         sys.path.append(self.config.path)
         try:
-            __import__(self.config.tweakFile)
-            tweakModule = sys.modules[self.config.tweakFile]
+            __import__(self.config.tweakmodule)
+            tweakModule = sys.modules[self.config.tweakmodule]
         except SyntaxError:
-            utils.log(self.logFile, "Syntax Error:  check " + self.config.tweakFile, True)
-            raise ValueError("Error in tweakFile")
+            utils.log(self.logFile, "Syntax Error:  check " + self.config.tweakmodule, True)
+            raise ValueError("Error in tweakmodule")
 
         # Run module then log
         self.tweakComment, self.gas, self.cloud = tweakModule.modify(self.gas, self.cloud, self.config.C, self.config.Cl)
@@ -310,7 +310,7 @@ class Atmosphere:
             print(self.tweakComment)
             print('---')
         utils.log(self.logFile, self.tweakComment, False)
-        tf = os.path.join(self.config.path, self.config.tweakFile + '.py')
+        tf = os.path.join(self.config.path, self.config.tweakmodule + '.py')
         tp = open(tf, 'r')
         dt = tp.read()
         utils.log(self.logFile, '======================' + tf + '=====================', False)

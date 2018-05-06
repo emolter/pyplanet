@@ -290,8 +290,8 @@
                 "Neptune": "False"
             }
         },
-        "tweakfile": {
-            "name": "tweakFile",
+        "tweakmodule": {
+            "name": "tweakmodule",
             "unit": "None",
             "help": "module that tweaks the read atmosphere",
             "default": {
@@ -301,15 +301,15 @@
                 "Neptune": "NeptuneTweak"
             }
         },
-        "scalefile": {
-            "name": "scalefile",
+        "scalemodule": {
+            "name": "scalemodule",
             "unit": "None",
             "help": "module used to linearly scale absorption profiles",
             "default": {
-                "Jupiter": "calc_scale.py",
-                "Saturn": "calc_scale.py",
-                "Uranus": "calc_scale.py",
-                "Neptune": "calc_scale.py"
+                "Jupiter": "calc_scale",
+                "Saturn": "calc_scale",
+                "Uranus": "calc_scale",
+                "Neptune": "calc_scale"
             }
         },
         "water": {

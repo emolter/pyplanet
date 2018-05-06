@@ -7,7 +7,6 @@ import numpy as np
 import time
 import mcmc.emcee_input as emcee_input
 import planet
-import generate_scale_file as gen
 import matplotlib.pyplot as plt
 
 # ## Load in real data and model spectrum
@@ -139,6 +138,9 @@ def run_emcee_spectrum_new():
     # generate the absorb.npy files once
     p = planet.Planet(name, generate_alpha='True', plot=False)
     p.run(freqs=freqs, b=b)
+    sys.path.append(planet.planet.capitalize())
+    __import__(p.config.scalemodule)
+    global gen = sys.modules[p.config.scalemodule]
     p = planet.Planet(name, mode='mcmc')
 
     # Check if we're going to overwrite a file

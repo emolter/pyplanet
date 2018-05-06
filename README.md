@@ -6,38 +6,36 @@ planetary atmosphere code
 README file for pyPlanet
 
 Before you start:
-    make sure the Jupiter/config.par file is accurate 
+    Note that the code gets its parameters from a config file, with a default name of `<planet_name>/config.par`
+    either edit that, or make a new one and call the code with that filename.
+    Also check the tweakmodule, which also should reside the `<planet_name>` directory.
     make sure the gas/cloud files exist
         make sure that Jupiter/JupiterTweak.py is what you think it is
-    use.py to confirm which constituents are being used 
-        use.py --nh3 to toggle e.g. nh3
 
-start ipython --pylab (you set the alias ipy for that)
+start ipython --pylab
 
 import planet
-j = planet.planet('jupiter')
+j = planet.planet('jupiter',config=<filename['config.par]'>)
 j.run(freqs=..., b=...)
 
 time-stamped data file is written to Output and log file to Logs
 
 options for freqs:
     freqs = 1.42    ==> single frequency at 1.42 GHz
-    freqs = [1,4,1]  ==> (i.e. three values within []) interprets as start,stop,step
-    freqs = [1.4,2.5,5.5,8.4,12.1]  ==> (i.e. a list within [] of length other than 3) runs at those frequencies
+    freqs = [1.4,2.5,5.5,8.4,12.1]  ==> uses these frequencies (can be a list, csv string or numpy array)
+    freqs = '1:10:1' ==> this will generate a range as start:stop:step (stop is always included)
+    freqs = '1:100:20' ==> this will generate a log range as start;stop;nvalues
     freqs = 'freq.dat'   ==> (string within '') reads in those frequencies, one per line
 
 
 options for b:
-        Output is "Image"
         b = 0.1  ==> generates a full image at that resolution (see blocks)
         b = 'stamp' ==> generates a small image (queries for extents)
-        Output is "Spectrum"
         b = [[0.0,0.0],[0.1,0.0],...]  ==> generates at listed points
         b = [0.0,0.0] ==> same as above at that one point
         b = 'disc' ==> disc-averaged brightness temperature
-    Output is "Profile"
-        b = [45.0,0.0,0.1,0.2,0.3,0.4,0.5,0.9,0.95] ==> generates a line at angle of first term (45deg) at magnitude of rest
-        b = [45.0,0.0,1.0,0.02]  ==> if length is 4, it assumes start, stop, step for last three
+        b = '0.0,0.2,0.4,0.6,0.8,1.0<45' ==> will use those values as an angle of 45deg, (default angle is 0.0)
+        b = '0.0:1.0:0.1<45' ==> range start:stop:step<angle                                                  >
 ==================================================================================================
 
 
