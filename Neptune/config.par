@@ -13,6 +13,7 @@ clouds Z T P SOLN H2O NH4SH NH3 H2S CH4 AR PH3 DZ
 ### tweak and regrid
 tweakmodule Neptune_add_ph3
 scalemodule calc_scale_initial
+scalefilename Scratch/scale.dat
 regridtype 1500
 pmin 0.01
 pmax 1900

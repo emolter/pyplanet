@@ -1,3 +1,5 @@
+import numpy as np
+
 
 def generate(planet, constituent_list, value_list):
     atm_pressure = planet.atm.gas[planet.atm.config.C['P']]
@@ -14,6 +16,8 @@ def generate(planet, constituent_list, value_list):
         for p, t, q in zip(atm_pressure, atm_temperature, atm_value[c]):
             new_v.append(get_value(p, t, q, c, v, chem))
         new_values[c] = np.asarray(new_v)
+
+    return new_values
 
 
 def get_value(p, t, q, c, v, chem):

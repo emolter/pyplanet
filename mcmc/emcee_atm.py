@@ -9,6 +9,7 @@ import mcmc.emcee_input as emcee_input
 import planet
 import matplotlib.pyplot as plt
 
+gen = None
 # ## Load in real data and model spectrum
 
 
@@ -31,10 +32,10 @@ def get_obs_spectrum(specdatfile):
     return spec
 
 
-def get_model_spectrum(p, val, scalemodule, freqs, b, par_names, limits):
+def get_model_spectrum(p, val, freqs, b, par_names, limits):
     '''Generate model spectrum'''
 
-    new_scale_factors = update_scale(p, scalemodule, par_names, val, limits)
+    new_scale_factors = update_scale(p, par_names, val, limits)
     for c in par_names:
         p.alpha.scale_constituent_values[c] = new_scale_factors[c]
 
@@ -46,7 +47,7 @@ def get_model_spectrum(p, val, scalemodule, freqs, b, par_names, limits):
     return spec
 
 
-def update_scale(p, scalemodule, par_names, guess, limits):
+def update_scale(p, par_names, guess, limits):
     '''Update scale val with new val'''
 
     return gen.generate(p, par_names, guess)
@@ -60,16 +61,16 @@ def lnprior(theta, limits):  # flat priors
         if limits[i][0] < theta[i] < limits[i][1]:
             tmp *= 1
         else:
-            tmp * = 0
+            tmp *= 0
     if tmp == 1:
         return 0.0
     else:
         return -np.inf
 
 
-def lnlike(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits):
+def lnlike(theta, x, y, yerr, p, freqs, b, par_names, limits):
     parvals = theta
-    spec = get_model_spectrum(p, parvals, scalemodule, freqs, b, par_names, limits)
+    spec = get_model_spectrum(p, parvals, freqs, b, par_names, limits)
     ymodel = spec[:, 1]
 
     sigsq = yerr**2
@@ -77,11 +78,11 @@ def lnlike(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits):
     return lnP
 
 
-def lnprob(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits):
+def lnprob(theta, x, y, yerr, p, freqs, b, par_names, limits):
     lp = lnprior(theta, limits)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + lnlike(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits)
+    return lp + lnlike(theta, x, y, yerr, p, freqs, b, par_names, limits)
 
 
 def run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=None):
@@ -112,12 +113,11 @@ def run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=None):
 
 
 def run_emcee_spectrum_new(config='config.par'):
-
+    global gen
     inp = emcee_input.gen_emcee_input()
 
     name = inp['planet']
     refData = inp['refData']
-    scalemodule = inp['scalemodule']
 
     freqs = inp['freqs']
     b = inp['b']
@@ -132,12 +132,20 @@ def run_emcee_spectrum_new(config='config.par'):
     outdatfile = inp['outdatafile']
     lnprobfile = inp['lnprobfile']
 
-    # generate the absorb.npy files once
+    # generate the absorb.npy files once and import scale compute module
     p = planet.Planet(name, config=config, generate_alpha='True', plot=False)
     p.run(freqs=freqs, b=b)
-    sys.path.append(planet.planet.capitalize())
+    sys.path.append(p.planet)
     __import__(p.config.scalemodule)
-    global gen = sys.modules[p.config.scalemodule]
+    gen = sys.modules[p.config.scalemodule]
+
+    # initialize scale file if needed
+    if not os.path.isfile(p.config.scale_file_name):
+        print("{} does not existing - initializing new one".format(p.config.scale_file_name))
+        atm_pressure = p.atm.gas[p.atm.config.C['P']]
+        planet.alpha.initialize_scalefile(p.config.scale_file_name, atm_pressure, par_names, guess)
+
+    # setup for mcmc
     p = planet.Planet(name, mode='mcmc', config=config)
 
     # Check if we're going to overwrite a file
@@ -165,7 +173,7 @@ def run_emcee_spectrum_new(config='config.par'):
     yerr = obs_spec[:, 2]
 
     pos = [guess + 1e-2 * np.random.randn(ndim) for i in range(nwalker)]
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, scalemodule,
+    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p,
                                     freqs, b, par_names, limits), threads=threads)
 
     f = open(outdatfile, "w")
@@ -180,7 +188,6 @@ def run_emcee_spectrum_append():
 
     name = inp['planet']
     refData = inp['refData']
-    scalemodule = inp['scalemodule']
 
     par_names = inp['parameters']['names']
     guess = inp['parameters']['guesses']
@@ -194,6 +201,7 @@ def run_emcee_spectrum_append():
 
     datfile = inp['outdatafile']
     lnprobfile = inp['lnprobfile']
+    initial_scalefile = inp['scalefile']
 
     name = name.capitalize()
 
@@ -202,6 +210,9 @@ def run_emcee_spectrum_append():
     y = obs_spec[:, 1]
     yerr = obs_spec[:, 2]
 
+    if os.path.isfile(initial_scalefile) is False:
+        print ("{0} is not found. Did you mean to run run_emcee_spectrum_new?".format(initial_scalefile))
+        return
     if os.path.isfile(datfile) is False:
         print ("{0} is not found. Did you mean to run run_emcee_spectrum_new?".format(datfile))
         return
@@ -222,7 +233,7 @@ def run_emcee_spectrum_append():
 
     samples, ndim, nwalkers = read_emcee_datfile(datfile)
     pos = samples[-1, :, :]
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, scalemodule, freqs, b, par_names, limits), threads=threads)
+    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, freqs, b, par_names, limits), threads=threads)
     sampler = run_emcee_spectrum(sampler, pos, nsteps, datfile, lnprobfile=lnprobfile)
     return sampler
 

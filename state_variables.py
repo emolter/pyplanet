@@ -11,7 +11,6 @@ def init_state_variables(mode, **kwargs):
                   'generate_alpha': False,
                   'use_existing_alpha': False,
                   'scale_existing_alpha': False,
-                  'scale_file_name': None,
                   'output_type': 'frequency'  # or 'wavelength'
                   }
 
@@ -26,7 +25,6 @@ def init_state_variables(mode, **kwargs):
         state_vars['write_log_file'] = False
         state_vars['write_output_files'] = False
         state_vars['scale_existing_alpha'] = True
-        state_vars['scale_file_name'] = 'Scratch/scale.dat'
     elif mode == 'use_alpha':
         state_vars['plot'] = False
         state_vars['verbose'] = True
@@ -35,7 +33,6 @@ def init_state_variables(mode, **kwargs):
         state_vars['plot'] = False
         state_vars['verbose'] = True
         state_vars['scale_existing_alpha'] = True
-        state_vars['scale_file_name'] = 'Scratch/scale.dat'
 
     # update based on provided kwargs
     for k in kwargs:

@@ -312,6 +312,17 @@
                 "Neptune": "calc_scale"
             }
         },
+        "scalefilename": {
+            "name": "scale_file_name",
+            "unit": "None",
+            "help": "name of scale data file to use for scale_existing_data",
+            "default": {
+                "Jupiter": "Scratch/scale.dat",
+                "Saturn": "Scratch/scale.dat",
+                "Uranus": "Scratch/scale.dat",
+                "Neptune": "Scratch/scale.dat"
+            }
+        },
         "water": {
             "name": "water_p",
             "unit": "um",

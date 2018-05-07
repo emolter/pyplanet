@@ -9,6 +9,39 @@ import config as pcfg
 import state_variables
 
 
+def initialize_scalefile(fn, atm_pressure, constituents, values):
+    with open(fn, 'w') as fp:
+        fp.write("#p {}\n".format(' '.join(constituents)))
+        for p in atm_pressure:
+            fp.write("{} {}\n".format(p, ' '.join([str(x) for x in values])))
+
+
+def write_scalefile(fn, columns, values):
+    with open(fn, 'w') as fp:
+        fp.write("#{}\n".format(' '.join(columns)))
+        for i in range(len(values[columns[0]])):
+            s = ''
+            for col in columns:
+                s += '{} '.format(values[col][i])
+            fp.write(s.strip() + '\n')
+
+
+def read_scalefile(fn):
+    with open(fn, 'r') as fp:
+        for line in fp:
+            if line[0] == '#':  # Must the first line and be there!
+                col = line.strip('#').strip().split()
+                columns = [x.lower() for x in col]
+                values = {}
+                for col in columns:
+                    values[col] = []
+            else:
+                data = [float(x) for x in line.split()]
+                for col, d in zip(columns, data):
+                    values[col].append(d)
+    return columns, values
+
+
 class Alpha:
     def __init__(self, mode='normal', config=None, log=None, **kwargs):
         """Reads in absorption formalisms
@@ -71,18 +104,7 @@ class Alpha:
             condata = np.load('Scratch/constituents.npz')
             self.ordered_constituents = condata['alpha_sort']
         if self.scale_existing_alpha:
-            with open(self.scale_file_name, 'r') as fp:
-                for line in fp:
-                    if line[0] == '#':  # Must the first line and be there!
-                        col = line.strip('#').split()
-                        self.scale_constituent_columns = [x.lower() for x in col]
-                        self.scale_constituent_values = {}
-                        for col in self.scale_constituent_columns:
-                            self.scale_constituent_values[col] = []
-                    else:
-                        data = [float(x) for x in line.split()]
-                        for col, d in zip(self.scale_constituent_columns, data):
-                            self.scale_constituent_values[col].append(d)
+            self.scale_constituent_columns, self.scale_constituent_values = read_scalefile(self.config.scale_file_name)
 
     def formalisms(self):
         # Get possible constituents

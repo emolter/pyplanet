@@ -92,7 +92,7 @@ class Planet:
         if self.use_existing_alpha or self.scale_existing_alpha:
             freqs_read = np.load('Scratch/freqs.npy')
             freqs = [f for f in freqs_read]
-            if self.verbose:
+            if self.verbose == 'loud':
                 print("Setting frequencies to ", freqs)
         reuse = False
         if isinstance(freqs, str) and freqs == 'reuse':
