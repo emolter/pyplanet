@@ -29,8 +29,7 @@ def gen_emcee_input():
     # ## Data output files for coninuing or analyzing emcee runs. Files must not exist prior to running a new emcee run.
     outdatafile = './emceeTest/out.dat'
     lnprobfile = './emceeTest/lnprobfile.dat'
-    configfile = './{}/config.par'.format(planet)
-
+    configfile = 'config.par'
 
     # extract frequencies from the data
     refd = np.genfromtxt(refData, comments='#')
