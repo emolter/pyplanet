@@ -131,9 +131,10 @@ def run_emcee_spectrum_new(config='config.par'):
 
     outdatfile = inp['outdatafile']
     lnprobfile = inp['lnprobfile']
+    configfile = inp['configfile']
 
     # generate the absorb.npy files once and import scale compute module
-    p = planet.Planet(name, config=config, generate_alpha='True', plot=False)
+    p = planet.Planet(name, config=configfile, generate_alpha='True', plot=False)
     p.run(freqs=freqs, b=b)
     sys.path.append(p.planet)
     __import__(p.config.scalemodule)
@@ -146,7 +147,7 @@ def run_emcee_spectrum_new(config='config.par'):
         planet.alpha.initialize_scalefile(p.config.scale_file_name, atm_pressure, par_names, guess)
 
     # setup for mcmc
-    p = planet.Planet(name, mode='mcmc', config=config)
+    p = planet.Planet(name, mode='mcmc', config=configfile)
 
     # Check if we're going to overwrite a file
     if os.path.isfile(outdatfile):

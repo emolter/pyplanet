@@ -1,4 +1,6 @@
 import numpy as np
+
+
 def gen_emcee_input():
     planet = 'Neptune'
     # refData - reference spectrum; should have three columns: frequencies, Tb, and Tb_error
@@ -7,7 +9,7 @@ def gen_emcee_input():
 
     b = 'disc'
 
-    ### Emcee Inputs
+    # ## Emcee Inputs
     # Parameters:
     # names - list of identifying names for the free parameters that emcee guesses and replaces in the scale file. Equal to fractional H2S depletion at two pressure ranges in this example. Names should be ALL CAPS.
     # guesses = list of initial guesses to the free parameters listed in 'names' to change in scale file - equal to the equilibrium value of H2S in this example
@@ -24,13 +26,14 @@ def gen_emcee_input():
     threads = 1
     nsteps = 100
 
-    ### Data output files for coninuing or analyzing emcee runs. Files must not exist prior to running a new emcee run.
+    # ## Data output files for coninuing or analyzing emcee runs. Files must not exist prior to running a new emcee run.
     outdatafile = './emceeTest/out.dat'
     lnprobfile = './emceeTest/lnprobfile.dat'
+    configfile = './{}/config.par'.format(planet)
 
 
     # extract frequencies from the data
-    refd = np.genfromtxt(refData, comments = '#')
+    refd = np.genfromtxt(refData, comments='#')
     freqs = sorted(list(refd.T[0]))
 
     # Make everything a dict
@@ -44,7 +47,8 @@ def gen_emcee_input():
            'threads':       threads,
            'nsteps':        nsteps,
            'outdatafile':   outdatafile,
-           'lnprobfile':    lnprobfile}
+           'lnprobfile':    lnprobfile,
+           'configfile':    configfile}
 
     print(inp['parameters'])
     return inp
