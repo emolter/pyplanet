@@ -1,5 +1,5 @@
 
-def generate(planet, constituent_list, value_list, output_filename='Scratch/scale.dat'):
+def generate(planet, constituent_list, value_list):
     atm_pressure = planet.atm.gas[planet.atm.config.C['P']]
     atm_temperature = planet.atm.gas[planet.atm.config.C['T']]
     atm_value = {}
@@ -12,8 +12,7 @@ def generate(planet, constituent_list, value_list, output_filename='Scratch/scal
     for c, v in zip(constituent_list, value_list):
         new_v = []
         for p, t, q in zip(atm_pressure, atm_temperature, atm_value[c]):
-            s = get_value(p, t, q, c, v, chem)
-            new_v.append(s)
+            new_v.append(get_value(p, t, q, c, v, chem))
         new_values[c] = np.asarray(new_v)
 
 
