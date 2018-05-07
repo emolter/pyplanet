@@ -9,8 +9,7 @@ Before you start:
     Note that the code gets its parameters from a config file, with a default name of `<planet_name>/config.par`
     either edit that, or make a new one and call the code with that filename.
     Also check the tweakmodule, which also should reside the `<planet_name>` directory.
-    make sure the gas/cloud files exist
-        make sure that Jupiter/JupiterTweak.py is what you think it is
+    When you make a planet instance you may also choose variable state_variables
 
 start ipython --pylab
 

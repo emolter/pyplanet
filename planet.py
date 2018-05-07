@@ -155,8 +155,7 @@ class Planet:
         missed_planet = self.rNorm is None
 
         if self.generate_alpha:
-            self.alpha.complete_generate_alpha(len(freqs), self.atm.nAtm)
-            np.save('Scratch/freqs', freqs)
+            self.alpha.complete_generate_alpha()
 
         #  ##Write output files
         if self.write_output_files:
@@ -249,7 +248,7 @@ class Planet:
         # Do some pre-processing to handle line vs single point and ndarrays
         if len(np.shape(b)) == 1 and len(b) > 2:
             b = ','.join([str(x) for x in b])
-        if len(b.split(',')) == 2:
+        if isinstance(b, str) and len(b.split(',')) == 2:
             b = b.split(',')
 
         # Handle lists/arrays

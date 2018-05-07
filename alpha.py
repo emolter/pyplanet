@@ -18,6 +18,7 @@ class Alpha:
         self.state_vars = kwargs.keys()
         self.set_state(set_mode='init', **kwargs)
         self.log = utils.setupLogFile(log)
+        self.freqs = None
 
         # get config
         if type(config) == str:
@@ -34,20 +35,25 @@ class Alpha:
         self.otherPar['nh3ice'] = self.config.nh3ice_p
         self.otherPar['h2sice'] = self.config.h2sice_p
         self.otherPar['ch4'] = self.config.ch4_p
+        self.alpha_data = None
         if self.use_existing_alpha or self.scale_existing_alpha:
             self.existing_alpha_setup()
         else:
             self.formalisms()
         if self.generate_alpha:
-            np.savez('Scratch/constituents', alpha_dict=self.config.constituent_alpha, alpha_sort=self.ordered_constituents)
-            self.fp_gen_alpha = open('Scratch/absorb.dat', 'w')
+            self.start_generate_alpha()
 
-    def complete_generate_alpha(self, n_freq, n_layer):
+    def start_generate_alpha(self):
+        np.savez('Scratch/constituents', alpha_dict=self.config.constituent_alpha, alpha_sort=self.ordered_constituents)
+        self.fp_gen_alpha = open('Scratch/absorb.dat', 'w')
+
+    def complete_generate_alpha(self):
         self.fp_gen_alpha.close()
         data = []
+        n_freqs = len(self.freqs)
         with open('Scratch/absorb.dat', 'r') as fp:
             for i, line in enumerate(fp):
-                if not i % n_freq:
+                if not i % n_freqs:
                     if i:
                         data.append(layer)
                     layer = []
@@ -57,21 +63,26 @@ class Alpha:
         data = np.array(data)
         np.save('Scratch/absorb', data)
         os.remove('Scratch/absorb.dat')
+        np.save('Scratch/freqs', self.freqs)
 
     def existing_alpha_setup(self):
-        self.alpha_data = np.load('Scratch/absorb.npy')
-        condata = np.load('Scratch/constituents.npz')
-        self.ordered_constituents = condata['alpha_sort']
+        if self.alpha_data is None:
+            self.alpha_data = np.load('Scratch/absorb.npy')
+            condata = np.load('Scratch/constituents.npz')
+            self.ordered_constituents = condata['alpha_sort']
         if self.scale_existing_alpha:
             with open(self.scale_file_name, 'r') as fp:
-                sch = fp.readline().strip('#').split()
-            self.scale_constituent_columns = [x.lower() for x in sch]
-            usecols = range(len(self.scale_constituent_columns))
-            if 'p' in self.scale_constituent_columns:
-                ignore_column = self.scale_constituent_columns.index('p')
-                del self.scale_constituent_columns[ignore_column]
-                del usecols[ignore_column]
-            self.scale_constituent_values = np.loadtxt(self.scale_file_name, usecols=usecols)
+                for line in fp:
+                    if line[0] == '#':  # Must the first line and be there!
+                        col = line.strip('#').split()
+                        self.scale_constituent_columns = [x.lower() for x in col]
+                        self.scale_constituent_values = {}
+                        for col in self.scale_constituent_columns:
+                            self.scale_constituent_values[col] = []
+                    else:
+                        data = [float(x) for x in line.split()]
+                        for col, d in zip(self.scale_constituent_columns, data):
+                            self.scale_constituent_values[col].append(d)
 
     def formalisms(self):
         # Get possible constituents
@@ -103,14 +114,17 @@ class Alpha:
     def getAlpha(self, freqs, layer, atm, units='invcm', plot=None):
         """This is a wrapper to get the absorption coefficient, either from calculating from formalisms
            or reading from file"""
+        if self.freqs is None and self.generate_alpha:
+            self.freqs = freqs
         if self.use_existing_alpha or self.scale_existing_alpha:
             if len(self.alpha_data) != len(atm.gas[0]):
                 raise ValueError("Absorption and atmosphere don't agree")
         if self.use_existing_alpha:
             return self.get_alpha_from_file(freqs, layer, units, plot)
         elif self.scale_existing_alpha:
-            if len(self.scale_constituent_values) != len(atm.gas[0]):
-                raise ValueError("Scaling and atmosphere don't agree")
+            for c in self.scale_constituent_values:
+                if len(self.scale_constituent_values[c]) != len(atm.gas[0]):
+                    raise ValueError("Scaling and atmosphere don't agree")
             return self.scale_alpha_from_file(freqs, layer, units, plot)
         else:
             P = atm.gas[atm.config.C['P']][layer]
@@ -129,13 +143,10 @@ class Alpha:
         totalAbsorption = np.zeros_like(freqs)
         for i in range(len(freqs)):
             for j in range(self.alpha_data.shape[2] - 1):
+                constituent = self.ordered_constituents[j]
                 new_value = self.alpha_data[layer, i, j]
-                if self.ordered_constituents[j] in self.scale_constituent_columns:
-                    if len(self.scale_constituent_columns) > 1:
-                        x = self.scale_constituent_columns.index(self.ordered_constituents[j])
-                        new_value *= self.scale_constituent_values[layer, x]
-                    else:
-                        new_value *= self.scale_constituent_values[layer]
+                if constituent in self.scale_constituent_columns:
+                    new_value *= self.scale_constituent_values[constituent][layer]
                 totalAbsorption[i] += new_value
         return totalAbsorption
 

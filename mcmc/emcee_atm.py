@@ -31,15 +31,12 @@ def get_obs_spectrum(specdatfile):
     return spec
 
 
-def get_model_spectrum(p, val, scaleFile, freqs, b, par_names, limits):
+def get_model_spectrum(p, val, scalemodule, freqs, b, par_names, limits):
     '''Generate model spectrum'''
 
-    new_scale_factors = update_scale(p, scaleFile, par_names, val, limits)
-    for i, c in enumerate(par_names):
-        if len(par_names) == 1:
-            p.alpha.scale_constituent_values = new_scale_factors[c]
-        else:
-            p.alpha.scale_constituent_values[i] = new_scale_factors[c]
+    new_scale_factors = update_scale(p, scalemodule, par_names, val, limits)
+    for c in par_names:
+        p.alpha.scale_constituent_values[c] = new_scale_factors[c]
 
     data = p.run(freqs=freqs, b=b)
 
@@ -49,8 +46,8 @@ def get_model_spectrum(p, val, scaleFile, freqs, b, par_names, limits):
     return spec
 
 
-def update_scale(p, scaleFile, par_names, guess, limits):
-    '''Update tweak file val with new val'''
+def update_scale(p, scalemodule, par_names, guess, limits):
+    '''Update scale val with new val'''
 
     return gen.generate(p, par_names, guess)
 
@@ -70,9 +67,9 @@ def lnprior(theta, limits):  # flat priors
         return -np.inf
 
 
-def lnlike(theta, x, y, yerr, p, scaleFile, freqs, b, par_names, limits):
+def lnlike(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits):
     parvals = theta
-    spec = get_model_spectrum(p, parvals, scaleFile, freqs, b, par_names, limits)
+    spec = get_model_spectrum(p, parvals, scalemodule, freqs, b, par_names, limits)
     ymodel = spec[:, 1]
 
     sigsq = yerr**2
@@ -80,11 +77,11 @@ def lnlike(theta, x, y, yerr, p, scaleFile, freqs, b, par_names, limits):
     return lnP
 
 
-def lnprob(theta, x, y, yerr, p, scaleFile, freqs, b, par_names, limits):
+def lnprob(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits):
     lp = lnprior(theta, limits)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + lnlike(theta, x, y, yerr, p, scaleFile, freqs, b, par_names, limits)
+    return lp + lnlike(theta, x, y, yerr, p, scalemodule, freqs, b, par_names, limits)
 
 
 def run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=None):
@@ -114,13 +111,13 @@ def run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=None):
     return sampler
 
 
-def run_emcee_spectrum_new():
+def run_emcee_spectrum_new(config='config.par'):
 
     inp = emcee_input.gen_emcee_input()
 
     name = inp['planet']
     refData = inp['refData']
-    scaleFile = inp['scaleFile']
+    scalemodule = inp['scalemodule']
 
     freqs = inp['freqs']
     b = inp['b']
@@ -136,12 +133,12 @@ def run_emcee_spectrum_new():
     lnprobfile = inp['lnprobfile']
 
     # generate the absorb.npy files once
-    p = planet.Planet(name, generate_alpha='True', plot=False)
+    p = planet.Planet(name, config=config, generate_alpha='True', plot=False)
     p.run(freqs=freqs, b=b)
     sys.path.append(planet.planet.capitalize())
     __import__(p.config.scalemodule)
     global gen = sys.modules[p.config.scalemodule]
-    p = planet.Planet(name, mode='mcmc')
+    p = planet.Planet(name, mode='mcmc', config=config)
 
     # Check if we're going to overwrite a file
     if os.path.isfile(outdatfile):
@@ -168,7 +165,7 @@ def run_emcee_spectrum_new():
     yerr = obs_spec[:, 2]
 
     pos = [guess + 1e-2 * np.random.randn(ndim) for i in range(nwalker)]
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, scaleFile,
+    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, scalemodule,
                                     freqs, b, par_names, limits), threads=threads)
 
     f = open(outdatfile, "w")
@@ -183,7 +180,7 @@ def run_emcee_spectrum_append():
 
     name = inp['planet']
     refData = inp['refData']
-    scaleFile = inp['scaleFile']
+    scalemodule = inp['scalemodule']
 
     par_names = inp['parameters']['names']
     guess = inp['parameters']['guesses']
@@ -225,7 +222,7 @@ def run_emcee_spectrum_append():
 
     samples, ndim, nwalkers = read_emcee_datfile(datfile)
     pos = samples[-1, :, :]
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, scaleFile, freqs, b, par_names, limits), threads=threads)
+    sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, scalemodule, freqs, b, par_names, limits), threads=threads)
     sampler = run_emcee_spectrum(sampler, pos, nsteps, datfile, lnprobfile=lnprobfile)
     return sampler
 
