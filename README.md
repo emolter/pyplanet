@@ -6,16 +6,26 @@ planetary atmosphere code
 README file for pyPlanet
 
 Before you start:
-    Note that the code gets its parameters from a config file, with a default name of `<planet_name>/config.par`
-    either edit that, or make a new one and call the code with that filename.
-    Also check the tweakmodule, which also should reside the `<planet_name>` directory.
-    When you make a planet instance you may also choose variable state_variables
 
-start ipython --pylab
+1. Set up your **config file**
+    1. Nearly all of the parameters are set within this configuration file
+    2. The defaults are set in config.json, which also sets up which parameters are contained within the config
+    3. Default name is `config.par` in each of the planet sub-directories
+    4. You may use different files, just call planet with config='filename', which must reside within <planet_name>
+    5. The tweakmodule filename gets set within the config, which adjusts the read in atmosphere - make sure it is what you want or make it so.
+    6. For mcmc, the scalemodule also gets set here (and the scalefilename)
+2. When you make a planet instance you may also set state_variables, they are initialized in state_variables.py
+3. When you make a planet instance you may specify a mode, which sets the state_variables to various configurations (see state_variables.py)
+4. The planet call variables and defaults are shown below.  kwargs may be one of the state_variables
+    planet:  name, mode='normal', config='config.par', \*\*kwargs
+5. By convention, the instance is set to the lower-case first letter of the planet (not required)
 
-import planet
-j = planet.planet('jupiter',config=<filename['config.par]'>)
-j.run(freqs=..., b=...)
+
+Within a python environment here is an example:
+
+\> import planet
+\> j = planet.Planet('jupiter',config='config_testing.par')
+\> catch_data = j.run(freqs='1:100:5', b='disc')
 
 time-stamped data file is written to Output and log file to Logs
 
