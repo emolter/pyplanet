@@ -318,6 +318,41 @@ class Atmosphere:
         utils.log(self.logFile, '====================================================================', False)
         tp.close()
 
+    def scaleAtm(self, scale_info='Scratch/scale.dat', plot_diff=True):
+        """
+        This is a built-in tweak module.
+        """
+        if isinstance(scale_info, str):
+            import alpha
+            col, scale_info = alpha.read_scalefile(scale_info)
+        else:
+            col = scale_info.keys()
+
+        if len(scale_info[col[0]]) != self.nAtm:
+            print("Warning - scale file doesn't match atmosphere.  Not applying.")
+            return None
+
+        if plot_diff:
+            color_seq = ['b', 'k', 'r', 'm', 'c']
+            clr = {}
+            plt.figure('Scale difference')
+            for i, gas in enumerate(col):
+                if gas.lower() != 'p':
+                    clr[gas] = color_seq[i]
+                    present, g = self.is_present(self.gas[self.config.C[gas.upper()]])
+                    plt.loglog(g, self.gas[self.config.C['P']], color=clr[gas], linestyle='--', label=gas + ' before')
+
+        for i in range(self.nAtm):
+            for c in col:
+                self.gas[self.config.C[c.upper()]][i] *= scale_info[c][i]
+
+        if plot_diff:
+            for i, gas in enumerate(col):
+                if gas.lower() != 'p':
+                    present, g = self.is_present(self.gas[self.config.C[gas.upper()]])
+                    plt.loglog(g, self.gas[self.config.C['P']], color=clr[gas], linestyle='-', label=gas + ' after')
+            self.frame_plot('Fractional Abundance')
+
     def computeProp(self):
         """This module computes derived atmospheric properties (makes self.layerProperty)"""
         if self.batch_mode:
@@ -395,18 +430,24 @@ class Atmosphere:
         present = bool(len(np.where(np.array(v) > tiny)[0]))
         return present, v
 
+    def frame_plot(self, xlabel):
+        v = list(plt.axis())
+        if v[0] < 1E-10:
+            v[0] = 1E-10
+        v[2] = 100.0 * math.ceil(self.gas[self.config.C['P']][-1] / 100.0)
+        v[3] = 1.0E-7 * math.ceil(self.gas[self.config.C['P']][0] / 1E-7)
+        plt.axis(v)
+        plt.ylabel('P [bars]')
+        plt.xlabel(xlabel)
+        plt.legend()
+
     def plotTP(self, plot='auto'):
         """Plot the T-P profile"""
         if plot == 'auto':
             plt.figure(self.planet + ': T-P')
         plt.title(self.planet + ':  T-P profile')
         plt.loglog(self.gas[self.config.C['T']], self.gas[self.config.C['P']])
-        v = list(plt.axis())
-        v[2] = 100.0 * math.ceil(self.gas[self.config.C['P']][-1] / 100.0)
-        v[3] = 1.0E-7 * math.ceil(self.gas[self.config.C['P']][0] / 1E-7)
-        plt.axis(v)
-        plt.ylabel('P [bars]')
-        plt.xlabel('T [K]')
+        self.frame_plot('T [K]')
 
     def plotCloud(self, dontPlot=['Z', 'P', 'T', 'DZ'], plot='auto'):
         """Plots the clouds"""
@@ -418,15 +459,7 @@ class Atmosphere:
             if cloud in dontPlot or not present:
                 continue
             plt.loglog(cl, self.cloud[self.config.Cl['P']], label=cloud)
-        v = list(plt.axis())
-        if v[0] < 1E-10:
-            v[0] = 1E-10
-        v[2] = 100.0 * math.ceil(self.gas[self.config.C['P']][-1] / 100.0)
-        v[3] = 1.0E-7 * math.ceil(self.gas[self.config.C['P']][0] / 1E-7)
-        plt.axis(v)
-        plt.ylabel('P [bars]')
-        plt.xlabel(r'Density [g/cm$^3$]')
-        plt.legend()
+        self.frame_plot(r'Density [g/cm$^3$]')
 
     def plotGas(self, dontPlot=['Z', 'P', 'T', 'DZ'], plot='auto'):
         """Plots the constituents"""
@@ -438,15 +471,7 @@ class Atmosphere:
             if gas in dontPlot or not present:
                 continue
             plt.loglog(g, self.gas[self.config.C['P']], label=gas)
-        v = list(plt.axis())
-        if v[0] < 1E-10:
-            v[0] = 1E-10
-        v[2] = 100.0 * math.ceil(self.gas[self.config.C['P']][-1] / 100.0)
-        v[3] = 1.0E-7 * math.ceil(self.gas[self.config.C['P']][0] / 1E-7)
-        plt.axis(v)
-        plt.ylabel('P [bars]')
-        plt.xlabel('Fractional Abundance')
-        plt.legend()
+        self.frame_plot('Fractional Abundance')
 
     def plotProp(self, dontPlot=['Z', 'P', 'T'], plot='auto'):
         if plot == 'auto':
@@ -457,12 +482,4 @@ class Atmosphere:
             if other in dontPlot or not present:
                 continue
             plt.loglog(g, self.gas[self.config.C['P']], label=other)
-        v = list(plt.axis())
-        if v[0] < 1E-10:
-            v[0] = 1E-10
-        v[2] = 100.0 * math.ceil(self.gas[self.config.C['P']][-1] / 100.0)
-        v[3] = 1.0E-7 * math.ceil(self.gas[self.config.C['P']][0] / 1E-7)
-        plt.axis(v)
-        plt.ylabel('P [bars]')
-        plt.xlabel('Property')
-        plt.legend()
+        self.frame_plot('Property Value')

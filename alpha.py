@@ -106,6 +106,9 @@ class Alpha:
         if self.scale_existing_alpha:
             self.scale_constituent_columns, self.scale_constituent_values = read_scalefile(self.config.scale_file_name)
 
+    def write_scale(self, fn):
+        write_scalefile(fn, self.scale_constituent_columns, self.scale_constituent_values)
+
     def formalisms(self):
         # Get possible constituents
         self.constituentsAreAt = prog_path.constituentPath

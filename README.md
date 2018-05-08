@@ -27,7 +27,7 @@ Within a python environment here is an example:
 ```
 time-stamped data file is written to Output and log file to Logs
 
-Here is the declaration for planet
+The declaration for planet is
 ```
 class Planet:
     def __init__(self, name, mode='normal', config='config.par', **kwargs)

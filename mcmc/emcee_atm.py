@@ -112,7 +112,7 @@ def run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=None):
     return sampler
 
 
-def run_emcee_spectrum_new(config='config.par'):
+def run_emcee_spectrum_new(config='config.par', output=True):
     global gen
     inp = emcee_input.gen_emcee_input()
 
@@ -180,7 +180,18 @@ def run_emcee_spectrum_new(config='config.par'):
     f = open(outdatfile, "w")
     f.close()
     sampler = run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=lnprobfile)
+
+    # Write out and plot scale
+    if output:
+        output_scale = 'Scratch/scale_mcmc_out.dat'
+        p.alpha.write_scalefile(output_scale)
+        p.atm.plot_diff(output_scale)
+
     return sampler
+
+
+def plot_diff(p):
+    p.atm.plot_diff
 
 
 def run_emcee_spectrum_append():
