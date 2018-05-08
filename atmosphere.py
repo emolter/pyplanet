@@ -343,8 +343,9 @@ class Atmosphere:
                     plt.loglog(g, self.gas[self.config.C['P']], color=clr[gas], linestyle='--', label=gas + ' before')
 
         for i in range(self.nAtm):
-            for c in col:
-                self.gas[self.config.C[c.upper()]][i] *= scale_info[c][i]
+            for gas in col:
+                if gas.lower() != 'p':
+                    self.gas[self.config.C[gas.upper()]][i] *= scale_info[gas][i]
 
         if plot_diff:
             for i, gas in enumerate(col):
