@@ -38,20 +38,20 @@ options for name:  Jupiter, Saturn, Uranus, Neptune
 options for mode:  normal, mcmc, batch, use_alpha, scale_alpha
 
 options for freqs:
-* freqs = 1.42    ==> single frequency at 1.42 GHz
-* freqs = [1.4,2.5,5.5,8.4,12.1]  ==> uses these frequencies (can be a list, csv string or numpy array)
-* freqs = '1:10:1' ==> this will generate a range as start:stop:step (stop is always included)
-* freqs = '1:100:20' ==> this will generate a log range as start;stop;nvalues
-* freqs = 'freq.dat'   ==> (string within '') reads in those frequencies, one per line
+* `freqs = 1.42`    ==> single frequency at 1.42 GHz
+* `freqs = [1.4,2.5,5.5,8.4,12.1]`  ==> uses these frequencies (can be a list, csv string or numpy array)
+* `freqs = '1:10:1'` ==> this will generate a range as start:stop:step (stop is always included)
+* `freqs = '1;100;20'` ==> this will generate a log range as start;stop;nvalues
+* `freqs = 'freq.dat'`   ==> (string within '') reads in those frequencies, one per line
 
 
 options for b:
-* b = 0.1  ==> generates a full image at that resolution (see blocks)
-* b = 'stamp' ==> generates a small image (queries for extents)
-* b = [[0.0,0.0],[0.1,0.0],...]  ==> generates at listed points
-* b = [0.0,0.0] ==> same as above at that one point
-* b = 'disc' ==> disc-averaged brightness temperature
-* b = '0.0,0.2,0.4,0.6,0.8,1.0<45' ==> will use those values as an angle of 45deg, (default angle is 0.0)
-* b = '0.0:1.0:0.1<45' ==> range start:stop:step<angle                                                  >
+* `b = 0.1`  ==> generates a full image at that resolution (see blocks)
+* `b = 'stamp'` ==> generates a small image (queries for extents)
+* `b = [[0.0,0.0],[0.1,0.0],...]`  ==> generates at listed points
+* `b = [0.0,0.0]` ==> same as above at that one point
+* `b = 'disc'` ==> disc-averaged brightness temperature
+* `b = '0.0,0.2,0.4,0.6,0.8,1.0<45'` ==> will use those values as an angle of 45deg, (default angle is 0.0)
+* `b = '0.0:1.0:0.1<45'` ==> range start:stop:step<angle                                                  >
 
 
