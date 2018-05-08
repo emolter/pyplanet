@@ -430,7 +430,7 @@ class Atmosphere:
         present = bool(len(np.where(np.array(v) > tiny)[0]))
         return present, v
 
-    def frame_plot(self, xlabel):
+    def frame_plot(self, xlabel, show_legend=True):
         v = list(plt.axis())
         if v[0] < 1E-10:
             v[0] = 1E-10
@@ -439,15 +439,16 @@ class Atmosphere:
         plt.axis(v)
         plt.ylabel('P [bars]')
         plt.xlabel(xlabel)
-        plt.legend()
+        if show_legend:
+            plt.legend()
 
     def plotTP(self, plot='auto'):
         """Plot the T-P profile"""
         if plot == 'auto':
             plt.figure(self.planet + ': T-P')
         plt.title(self.planet + ':  T-P profile')
-        plt.loglog(self.gas[self.config.C['T']], self.gas[self.config.C['P']])
-        self.frame_plot('T [K]')
+        plt.loglog(self.gas[self.config.C['T']], self.gas[self.config.C['P']], label='T')
+        self.frame_plot('T [K]', show_legend=False)
 
     def plotCloud(self, dontPlot=['Z', 'P', 'T', 'DZ'], plot='auto'):
         """Plots the clouds"""
