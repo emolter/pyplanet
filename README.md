@@ -3,7 +3,6 @@ pyplanet
 
 planetary atmosphere code
 
-README file for pyPlanet
 
 Before you start:
 
@@ -17,17 +16,26 @@ Before you start:
 2. When you make a planet instance you may also set state_variables, they are initialized in state_variables.py
 3. When you make a planet instance you may specify a mode, which sets the state_variables to various configurations (see state_variables.py)
 4. The planet call variables and defaults are shown below.  kwargs may be one of the state_variables
-> planet:  name, mode='normal', config='config.par', \*\*kwargs
 5. By convention, the instance is set to the lower-case first letter of the planet (not required)
 
 
 Within a python environment here is an example:
 ```
-\> import planet
-\> j = planet.Planet('jupiter',config='config_testing.par')
-\> catch_data = j.run(freqs='1:100:5', b='disc')
+> import planet
+> j = planet.Planet('jupiter',config='config_testing.par')
+> catch_data = j.run(freqs='1:100:5', b='disc')
 ```
 time-stamped data file is written to Output and log file to Logs
+
+Here is the declaration for planet
+```
+class Planet:
+    def __init__(self, name, mode='normal', config='config.par', **kwargs)
+```
+
+options for name:  Jupiter, Saturn, Uranus, Neptune
+
+options for mode:  normal, mcmc, batch, use_alpha, scale_alpha
 
 options for freqs:
 * freqs = 1.42    ==> single frequency at 1.42 GHz
