@@ -23,8 +23,8 @@ class FileIO(object):
                 print("Invalid output type: {}".format(outType))
         return outputFile
 
-    def writeSpectrum(self, fp, freqs, freqUnit, b, Tb):
-        fp_lineoutput = open('specoutputline.dat', 'w')
+    def writeSpectrum(self, fp, freqs, freqUnit, b, Tb, lineoutput='Scratch/specoutputline.dat'):
+        fp_lineoutput = open(lineoutput, 'w')
         if self.outputType.lower() == 'frequency':
             s = '# {}  K@b  \t'.format(freqUnit)
         elif self.outputType.lower() == 'wavelength':
