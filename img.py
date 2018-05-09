@@ -245,42 +245,42 @@ class Img:
             lat[1].append(r[1])
         return lat
 
-    def drawLat(self,tip='auto',reference='ref'):
+    def drawLat(self, tip='auto', reference='ref'):
         """ad hoc function to draw specific latitude lines"""
         out = self.outline(reference=reference)
-        plt.plot(out[0],out[1],'k')
-        lat = self.lat(-89.0,rotate='auto',tip=tip,reference=reference)
-        plt.plot(lat[0],lat[1],'k')
-        lat = self.lat(-60.0,lngs=260.0,rotate='auto',tip=tip,reference=reference)
-        plt.plot(lat[0],lat[1],'k--')
-        lat = self.lat(-30.0,lngs=200.0,rotate='auto',tip=tip,reference=reference)
-        plt.plot(lat[0],lat[1],'k--')
-        lat = self.lat(0.0,lngs=192.0,rotate='auto',tip=tip,reference=reference)
-        plt.plot(lat[0],lat[1],'k')
-        lat = self.lat(30.0,lngs=160.0,rotate='auto',tip=tip,reference=reference)
-        plt.plot(lat[0],lat[1],'k--')
+        plt.plot(out[0], out[1], 'k')
+        lat = self.lat(-89.0, rotate='auto', tip=tip, reference=reference)
+        plt.plot(lat[0], lat[1], 'k')
+        lat = self.lat(-60.0, lngs=260.0, rotate='auto', tip=tip, reference=reference)
+        plt.plot(lat[0], lat[1], 'k--')
+        lat = self.lat(-30.0, lngs=200.0, rotate='auto', tip=tip, reference=reference)
+        plt.plot(lat[0], lat[1], 'k--')
+        lat = self.lat(0.0, lngs=192.0, rotate='auto', tip=tip, reference=reference)
+        plt.plot(lat[0], lat[1], 'k')
+        lat = self.lat(30.0, lngs=160.0, rotate='auto', tip=tip, reference=reference)
+        plt.plot(lat[0], lat[1], 'k--')
 
-    def saveImage(self,header=None,image=None,filename=None):
+    def saveImage(self, header=None, image=None, filename=None):
         """Saves header/image to file"""
-        if image == None:
+        if image is None:
             image = self.data
             header = self.header
-        if filename == None:
+        if filename is None:
             print('Saving image composed of file headers:')
             print(self.header)
             filename = raw_input('output filename: ')
-        fp = open(filename,'w')
+        fp = open(filename, 'w')
         for hkey in header.keys():
-            s = '#  '+hkey+':  '
+            s = '#  ' + hkey + ':  '
             for v in header[hkey]:
-                s+=str(v)+'  '
-            fp.write(s+'\n')
+                s += str(v) + '  '
+            fp.write(s + '\n')
             print(s)
         for row in image:
             s = ''
             for col in row:
-                s+= '%.2f\t' % (col)
-            fp.write(s[0:-1]+'\n')
+                s += '%.2f\t' % (col)
+            fp.write(s[0: -1] + '\n')
         fp.close()
 
     def editImageB(self, bmod, Tmod):
@@ -1004,27 +1004,26 @@ def convolvend(array, kernel, boundary='fill', fill_value=0,
     arrayfft = fftn(bigarray)
     # need to shift the kernel so that, e.g., [0,0,1,0] -> [1,0,0,0] = unity
     kernfft = fftn(np.fft.ifftshift(bigkernel))
-    fftmult = arrayfft*kernfft
+    fftmult = arrayfft * kernfft
     if (interpolate_nan or ignore_edge_zeros) and kernel_is_normalized:
         if ignore_edge_zeros:
             bigimwt = np.zeros(newshape, dtype=np.complex128)
         else:
             bigimwt = np.ones(newshape, dtype=np.complex128)
-        bigimwt[arrayslices] = 1.0-nanmaskarray*interpolate_nan
+        bigimwt[arrayslices] = 1.0 - nanmaskarray * interpolate_nan
         wtfft = fftn(bigimwt)
         # I think this one HAS to be normalized (i.e., the weights can't be
         # computed with a non-normalized kernel)
-        wtfftmult = wtfft*kernfft/kernel.sum()
+        wtfftmult = wtfft * kernfft / kernel.sum()
         wtsm = ifftn(wtfftmult)
         # need to re-zero weights outside of the image (if it is padded, we
         # still don't weight those regions)
         bigimwt[arrayslices] = wtsm.real[arrayslices]
         # curiously, at the floating-point limit, can get slightly negative numbers
         # they break the min_wt=0 "flag" and must therefore be removed
-        bigimwt[bigimwt<0] = 0
+        bigimwt[bigimwt < 0] = 0
     else:
         bigimwt = 1
-
 
     if np.isnan(fftmult).any():
         # this check should be unnecessary; call it an insanity check
@@ -1037,7 +1036,7 @@ def convolvend(array, kernel, boundary='fill', fill_value=0,
     kernel[nanmaskkernel] = np.nan
 
     if return_fft:
-        if fftshift: # default on
+        if fftshift:  # default on
             if crop:
                 return np.fft.fftshift(fftmult)[arrayslices]
             else:
