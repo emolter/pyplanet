@@ -185,13 +185,9 @@ def run_emcee_spectrum_new(config='config.par', output=True):
     if output:
         output_scale = 'Scratch/scale_mcmc_out.dat'
         p.alpha.write_scale(output_scale)
-        #p.atm.plot_diff(output_scale)
+        p.atm.scaleAtm(output_scale, plot_diff=True)
 
     return sampler
-
-
-def plot_diff(p):
-    p.atm.plot_diff
 
 
 def run_emcee_spectrum_append(nsteps = 0, config='config.par', output=True):
@@ -233,13 +229,13 @@ def run_emcee_spectrum_append(nsteps = 0, config='config.par', output=True):
     nwalker, ndim = pos.shape[0], pos.shape[1]
     sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, freqs, b, par_names, limits), threads=threads)
     sampler = run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=lnprobfile)
-    
+  
     # Write out and plot scale
     if output:
         output_scale = 'Scratch/scale_mcmc_out.dat'
         p.alpha.write_scale(output_scale)
-        #p.atm.plot_diff(output_scale)
-    
+        p.atm.scaleAtm(output_scale, plot_diff=True)
+
     return sampler
 
 
