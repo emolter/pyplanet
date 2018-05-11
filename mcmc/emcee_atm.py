@@ -247,7 +247,7 @@ def run_emcee_spectrum_append(output=True):
     # Write out and plot scale
     if output:
         output_scale = 'Scratch/scale_mcmc_out.dat'
-        p.alpha.write_scalefile(output_scale)
+        p.alpha.write_scale(output_scale)
         p.atm.scaleAtm(output_scale, plot_diff=True)
 
     return sampler
