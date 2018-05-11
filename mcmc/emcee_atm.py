@@ -184,8 +184,8 @@ def run_emcee_spectrum_new(config='config.par', output=True):
     # Write out and plot scale
     if output:
         output_scale = 'Scratch/scale_mcmc_out.dat'
-        p.alpha.write_scalefile(output_scale)
-        p.atm.plot_diff(output_scale)
+        p.alpha.write_scale(output_scale)
+        #p.atm.plot_diff(output_scale)
 
     return sampler
 
@@ -194,59 +194,52 @@ def plot_diff(p):
     p.atm.plot_diff
 
 
-def run_emcee_spectrum_append():
-
+def run_emcee_spectrum_append(nsteps = 0, config='config.par', output=True):
+    global gen
     inp = emcee_input.gen_emcee_input()
 
     name = inp['planet']
     refData = inp['refData']
+
+    freqs = inp['freqs']
+    b = inp['b']
 
     par_names = inp['parameters']['names']
     guess = inp['parameters']['guesses']
     limits = inp['parameters']['limits']
     nwalker = inp['nwalkers']
     threads = inp['threads']
-    nsteps = inp['nsteps']
+    if nsteps <= 0:
+        nsteps = inp['nsteps']
 
-    freqs = inp['freqs']
-    b = inp['b']
-
-    datfile = inp['outdatafile']
+    outdatfile = inp['outdatafile']
     lnprobfile = inp['lnprobfile']
-    initial_scalefile = inp['scalefile']
+    configfile = inp['configfile']
 
-    name = name.capitalize()
-
+    name = str.capitalize(name)
     obs_spec = get_obs_spectrum(refData)
     x = obs_spec[:, 0]
     y = obs_spec[:, 1]
     yerr = obs_spec[:, 2]
+    
+    p = planet.Planet(name, mode='mcmc', config=configfile)
+    
+    sys.path.append(p.planet)
+    __import__(p.config.scalemodule)
+    gen = sys.modules[p.config.scalemodule]
 
-    if os.path.isfile(initial_scalefile) is False:
-        print ("{0} is not found. Did you mean to run run_emcee_spectrum_new?".format(initial_scalefile))
-        return
-    if os.path.isfile(datfile) is False:
-        print ("{0} is not found. Did you mean to run run_emcee_spectrum_new?".format(datfile))
-        return
-    append = True
-    print ("appending to file {0}?".format(datfile))
-    if append is False:
-        print ("If you want to continue running emcee on {0}, then say so! Returning.".format(datfile))
-        return
-    # Check probability file
-    continueprob, newprob = check_likefile(lnprobfile, "lnprobfile")
-    if continueprob is False:
-        print ("Exiting because of a problem with lnprobfile.")
-        return
-    if newprob is True:
-        print ("Warning: printing probabilities to a NEW file, while appending walker positions to an OLD file.")
-        f = open(lnprobfile, "w")
-        f.close()
-
-    samples, ndim, nwalkers = read_emcee_datfile(datfile)
-    pos = samples[-1, :, :]
+    samples = read_emcee_datfile(outdatfile)
+    pos = samples[:, -1, :]
+    nwalker, ndim = pos.shape[0], pos.shape[1]
     sampler = emcee.EnsembleSampler(nwalker, ndim, lnprob, args=(x, y, yerr, p, freqs, b, par_names, limits), threads=threads)
-    sampler = run_emcee_spectrum(sampler, pos, nsteps, datfile, lnprobfile=lnprobfile)
+    sampler = run_emcee_spectrum(sampler, pos, nsteps, outdatfile, lnprobfile=lnprobfile)
+    
+    # Write out and plot scale
+    if output:
+        output_scale = 'Scratch/scale_mcmc_out.dat'
+        p.alpha.write_scale(output_scale)
+        #p.atm.plot_diff(output_scale)
+    
     return sampler
 
 
@@ -289,74 +282,81 @@ def read_emcee_probfile(probfile):
     probabilities = out[:, 1].reshape(-1, nwalkers)
     return probabilities, nwalkers
 
-
-def plot_burnin(samples, names, cut=0):
-    nwalkers = samples.shape[0]
-    niter = samples.shape[1]
-    ndim = samples.shape[2]
-
-    fig, axes = plt.subplots(1, ndim, figsize=(5, 5 * ndim))
-
-    for i in range(ndim):
-        label = names[i]
-        if ndim == 1:
-            ax = axes
-        else:
-            ax = axes[i]
-
-        for w in range(nwalkers):
-            ax.plot(np.arange(1, niter + 1), samples[w, :, i])
-        ax.set_ylabel(label)
-        ax.set_xlabel('Iteration')
-
-        flatchain = samples[:, cut:, i].flatten()
-        [lower, middle, upper] = np.percentile(flatchain, [16, 50, 84])
-        ax.axhline(middle, color='k', linestyle='--')
-        ax.axhline(lower, color='k', linestyle=':')
-        ax.axhline(upper, color='k', linestyle=':')
-
-    plt.tight_layout()
-    plt.show()
-
-
-def best_fit(samples, labels, cut=0):
-    '''Given a chain of MCMC samples, output 16th, 50th, and 84th percentile
-    in each dimension. labels has same length as ndim'''
-
-    ls = []
-    ms = []
-    us = []
-    for i in range(samples.shape[2]):
-        flatchain = samples[:, cut:, i].flatten()
-        [lower, middle, upper] = np.percentile(flatchain, [16, 50, 84])
-        ls.append(lower)
-        ms.append(middle)
-        us.append(upper)
-    print('Labels', labels)
-    print('Best Fits', ms)
-    print('Lower Error', ls)
-    print('Upper Error', us)
-    return ms, ls, us
-
-
-def cornerplot(samples, labels, cut=0):
-    samples = samples[:, cut:, :]
-    fig = corner.corner(samples.reshape((-1, samples.shape[2])), labels=labels)
-    # truths = [x1_true, x2_true, ...)
-
-    plt.show()
-
-# def best_fit(samples, names, burnin):
-#     flatchain=samples.swapaxes(0,1)[:,burnin:,:].reshape(-1,samples.shape[2])
-#     results  = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
-#                    zip(*np.percentile(flatchain, [16, 50, 84], axis=0)))
-#     for i in range(len(names)):
-#         print '{0} : {1} +{2}, -{3}'.format(names[i],results[i][0],results[i][1],results[i][2])
-#     return results
-#
-# def plot_simple_burnin(samples, nwalkers):
-#     print(samples.shape)
-#     for i in range(nwalkers):
-#         plt.plot(samples[:,i,0])
-#
-#     plt.show()
+class mcOutput:
+    '''Contains functions for plotting and analyzing output of mcmc run'''
+    def __init__(self, samplefile, param_names, burnin_cut):
+        
+        self.samples = read_emcee_datfile(samplefile)
+        self.nwalkers = self.samples.shape[0]
+        self.niter = self.samples.shape[1]
+        self.ndim = self.samples.shape[2]
+        if burnin_cut >= self.niter * self.nwalkers:
+            print('ERROR: cutoff is larger than number of iterations!')
+        
+        self.cut_samples = self.samples[:, burnin_cut:, :]
+        self.flatchain = self.cut_samples.reshape((-1, self.ndim))
+        
+        self.param_names = param_names
+        
+        self.bestfit_params = np.mean(self.flatchain, axis = 0)
+        
+        
+    def plot_burnin(self):
+    
+        fig, axes = plt.subplots(1, self.ndim, figsize=(5, 5 * self.ndim))
+    
+        for i in range(self.ndim):
+            label = self.param_names[i]
+            if self.ndim == 1:
+                ax = axes
+            else:
+                ax = axes[i]
+    
+            for w in np.random.choice(range(self.nwalkers), size = 5, replace = False):
+                ax.plot(np.arange(1, self.niter + 1), self.samples[w, :, i])
+            ax.set_ylabel(label)
+            ax.set_xlabel('Iteration')
+    
+            [lower, middle, upper] = np.percentile(self.flatchain[:,i].flatten(), [16, 50, 84])
+            ax.axhline(middle, color='k', linestyle='--')
+            ax.axhline(lower, color='k', linestyle=':')
+            ax.axhline(upper, color='k', linestyle=':')
+    
+        plt.tight_layout()
+        plt.show()
+    
+    
+    def print_best_fit(self):
+        '''Given a chain of MCMC samples, output 16th, 50th, and 84th percentile
+        in each dimension. labels has same length as ndim'''
+    
+        ls = []
+        ms = []
+        us = []
+        for i in range(self.ndim):
+            [lower, middle, upper] = np.percentile(self.flatchain[:,i].flatten(), [16, 50, 84])
+            ls.append(lower)
+            ms.append(middle)
+            us.append(upper)
+        print('Labels', self.param_names)
+        print('Best Fits', ms)
+        print('Lower Error', ls)
+        print('Upper Error', us)
+        return ms, ls, us
+    
+    
+    def cornerplot(self):
+        fig = corner.corner(self.flatchain, labels=self.param_names)
+        # truths = [x1_true, x2_true, ...)
+    
+        plt.show()
+        
+    def compare_to_data(self):
+        '''Need to build! Should run the best fit parameters through
+        to get a model spectrum, then compare to data. To visualize range
+        of solutions, can also add functionality to take ~100 random samples
+        from self.flatchain and get model spectra out of them and plot all
+        on same figure with alpha = 0.1'''
+        return
+    
+    

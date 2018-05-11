@@ -22,7 +22,7 @@ mc.run_emcee_spectrum_new()
 ############
 
 import mcmc.emcee_atm as mc
-mc.run_emcee_spectrum_append()
+mc.run_emcee_spectrum_append(nsteps = 100)
 
 ############
 
@@ -31,9 +31,14 @@ mc.run_emcee_spectrum_append()
 ############
 
 import mcmc.emcee_atm as mc
-samples, ndim, nwalkers = mc.read_emcee_datfile('./emceeTest/out.dat')
-mc.plot_burnin(samples, ['H2S'], 1, 100)
-mc.best_fit(samples, ['H2S'], 100)
+
+samplef = './emceeTest/out.dat'
+param_labels = ['H2S']
+burnin_cut = 100 # cuts off the first n samples, when burnin is happening
+outobj = mc.mcOutput(samplef, param_labels, burnin_cut)
+outobj.plot_burnin()
+outobj.print_best_fit()
+outobj.cornerplot()
 
 #############
 

@@ -2,6 +2,7 @@ import numpy as np
 
 
 def generate(planet, constituent_list, value_list):
+    '''Shell function to get_value'''
     atm_pressure = planet.atm.gas[planet.atm.config.C['P']]
     atm_temperature = planet.atm.gas[planet.atm.config.C['T']]
     atm_value = {}
@@ -21,6 +22,7 @@ def generate(planet, constituent_list, value_list):
 
 
 def get_value(p, t, q, c, v, chem):
+    '''Check if H2S is saturated for a given pressure, return appropriate scaling'''
     if c == 'H2S':
         Psat_gas = chem[c].Psat(t)
         if p < 43. and p * q * v > Psat_gas:  # Pressure greater than saturation pressure

@@ -19,10 +19,10 @@ def gen_emcee_input():
     # threads = if > 1 will implement parallelization
     # nsteps = number of iterations to take before stopping - may append to prior runs by running emcee_append
     parameters = {'names':    ['H2S'],
-                  'guesses':  [0.3],
+                  'guesses':  [0.9],
                   'limits':   [[0.25, 1.75]]}
 
-    nwalkers = 30
+    nwalkers = 10
     threads = 1
     nsteps = 100
 
